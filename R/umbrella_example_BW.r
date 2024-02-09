@@ -13,7 +13,7 @@ modele.parapluie <- function(theta, obs, name.S = c("Dry", "Rainy")) {
   p.emiss <- rbind(ifelse(obs == 1, 1-b, b), ifelse(obs == 1, b, 1-b))
   rownames(p.emiss) <- name.S
   list(trans = trans, pi = stat, p.emiss = p.emiss)
-} 
+}
 
 M.step.parapluie <- function(obs, backward) {
   l <- ncol(backward$phi)
@@ -25,17 +25,17 @@ M.step.parapluie <- function(obs, backward) {
 }
 
 if(TRUE) {
-# Exemple d'utilisation : 
-source("forward.r")
-source("backward.r")
-source("EM.r")
+# Exemple d'utilisation :
+#source("forward.r")
+#source("backward.r")
+#source("EM.r")
 
 # nos observations :
-X <- c(1, 1, 2, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 1, 2, 2, 1, 1, 1, 1, 
-    1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 2, 2, 2, 1, 
+X <- c(1, 1, 2, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 1, 2, 2, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 2, 2, 2, 1,
     2, 2, 1, 2, 2, 1, 2, 2, 2, 2, 2, 1, 2, 2, 2)
 
-# nos paramètres a et b d'initialisation : 
+# nos paramètres a et b d'initialisation :
 par <- c(a = 0.3, b = 0.15)
 
 mod <- modele.parapluie(theta = par, obs = X)
