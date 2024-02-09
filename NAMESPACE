@@ -1,3 +1,9 @@
 exportPattern("^[[:alpha:]]+")
 importFrom(Rcpp, evalCpp)
 useDynLib(steveHMM, .registration = TRUE)
+
+
+export(backward.r)
+export(forward.r)
+export(EM.r)
+export(umbrella_example_BW.r)
