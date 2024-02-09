@@ -1,0 +1,13 @@
+Package: steveHMM
+Type: Package
+Title:  HMM parameters estimation with Baum-Welch algorithm and quasi-Newton method (Title Case)
+Version: 0.1.0
+Author: Sidonie Foulon
+Maintainer: Sidonie Foulon <sidonie.foulon@inserm.fr>
+Description: More about what it does (maybe more than one line)
+    Use four spaces when indenting paragraphs within the Description.
+License: What license is it under?
+Encoding: UTF-8
+LazyData: true
+Imports: Rcpp (>= 1.0.11)
+LinkingTo: Rcpp
