@@ -43,7 +43,8 @@ if(TRUE) {
 #source("EM.r")
 
 # nos observations :
-  X <- ifelse(geyser$duration < 3, 1,2)
+library(MASS)
+X <- ifelse(geyser$duration < 3, 1,2)
 
 # nos paramètres a et b d'initialisation :
 par <- c(a = 0.3, b = 0.15)
