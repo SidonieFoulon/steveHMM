@@ -100,10 +100,6 @@ SQUAREM <- function(theta, obs, modele.fun, M.step.fun, lower, upper, max.iter, 
       beta <- beta/2
     }
   }
-
-  Theta[,i] <- theta
-  
-  return(list(Theta = Theta, mod = mod, fb = c(fo, ba)))
 }
 
 
