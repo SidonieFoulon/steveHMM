@@ -24,11 +24,8 @@ M.step.parapluie <- function(obs, backward) {
   c(a,b)
 }
 
-if(TRUE) {
+if(FALSE) {
 # Exemple d'utilisation :
-#source("forward.r")
-#source("backward.r")
-#source("EM.r")
 
 # nos observations :
 X <- c(1, 1, 2, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 1, 2, 2, 1, 1, 1, 1,
@@ -38,11 +35,19 @@ X <- c(1, 1, 2, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 1, 2, 2, 1, 1, 1, 1,
 # nos paramètres a et b d'initialisation :
 par <- c(a = 0.3, b = 0.15)
 
-mod <- modele.parapluie(theta = par, obs = X)
-fo <- forward(mod)
-ba <- backward(mod, fo)
+# maximisation directe
+f <-function(theta) logLikelihood(theta, X, modele.parapluie)
+optim( c(0.30, 0.15), f, method = "L-B", lower = c(0,0)+0.01, upper = c(1,1), control = list(fnscale = -1) )
 
+# EM
 em <- EM(par, X, modele.parapluie, M.step.parapluie, 20)
 
-}
+# SQUAREM
+squarem <- SQUAREM(par, X, modele.parapluie, M.step.parapluie, lower = c(0,0), upper = c(1,1), 20)
 
+par(mfrow = c(2,1))
+plot( em$Theta[1,] , type = "o", ylim = range(em$Theta[1,], squarem[1,]))
+lines( squarem[1,], type = "o", col = "red")
+plot( em$Theta[2,] , type = "o", ylim = range(em$Theta[2,], squarem[2,]))
+lines( squarem[2,], type = "o", col = "red")
+}
