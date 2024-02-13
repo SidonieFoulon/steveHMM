@@ -36,8 +36,8 @@ X <- c(1, 1, 2, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 1, 2, 2, 1, 1, 1, 1,
 par <- c(a = 0.3, b = 0.15)
 
 # maximisation directe
-f <-function(theta) logLikelihood(theta, X, modele.parapluie)
-optim( c(0.30, 0.15), f, method = "L-B", lower = c(0,0)+0.01, upper = c(1,1), control = list(fnscale = -1) )
+f <-function(theta) neg_log_likelihood(theta, X, modele.parapluie)
+optim( c(0.30, 0.15), f, method = "L-B", lower = c(0,0)+0.01, upper = c(1,1) )
 
 # EM
 em <- EM(par, X, modele.parapluie, M.step.parapluie, 20)
