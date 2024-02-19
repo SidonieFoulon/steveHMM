@@ -54,3 +54,4 @@ lines( squarem[1,], type = "o", col = "red")
 plot( em$Theta[2,] , type = "o", ylim = range(em$Theta[2,], squarem[2,]))
 lines( squarem[2,], type = "o", col = "red")
 
+}
