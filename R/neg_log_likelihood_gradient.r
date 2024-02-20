@@ -1,21 +1,30 @@
+# fonction qui prend un theta numérique et appelle 'dual' seulement
+# pour obtenir les dérivées des matrices envoyées par modèle
+# ensuite la differenciation automatique est faite par la fonction elle même
 neg_log_likelihood_gradient <- function(theta, obs, modele.fun) {
-  modele <- modele.fun(theta, obs)
 
-  Tr <- modele$trans
-  p.Em <- modele$p.emiss
+  theta1 <- dual(theta)  
+  vn <- varnames(theta1)
 
-  d.p.Em <- modele$d.p.emiss
-  d.Tr <- modele$d.trans
+  modele <- modele.fun(theta1, obs)
+
+  Tr <- value(modele$trans)
+  p.Em <- value(modele$p.emiss)
+  Pi <- value(modele$pi)
+
+  d.Tr <- d(modele$trans, vn)
+  d.p.Em <- d(modele$p.emiss, vn)
+  d.Pi <- d(modele$pi, vn)
 
   l <- ncol(p.Em)
   m <- nrow(Tr)
 
   # nb de dérivées à prendre
-  d <- length(modele$d.trans)
+  d <- length(vn)
 
   # initialisation : alpha = état stationnaire
-  alpha <- modele$pi
-  d.alpha <- modele$d.pi
+  alpha <- Pi
+  d.alpha <- d.Pi
   d.tmp <- list()
   d.beta <- list()
   d.ll <- numeric(d)

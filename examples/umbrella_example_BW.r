@@ -139,9 +139,12 @@ lines( traceCauchy[2,1:19], type = "o", col = "#c05140")
 set.seed(28)
 nb_it <- test.init(X, 5000)
 
+<<<<<<< HEAD
 #test du temps
 set.seed(28)
 temps <- test.time(par, obs = X, it = 5000)
 
 
+=======
+>>>>>>> 278c277be5540535b758853111d2ba604f6d31e7
 }
