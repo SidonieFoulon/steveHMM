@@ -24,6 +24,76 @@ M.step.parapluie <- function(obs, backward) {
   c(a,b)
 }
 
+test.init <- function(obs, it){
+  qN <- vector(length = it)
+  BW <- vector(length = it)
+  SQ <- vector(length = it)
+
+  for(i in 1:it){
+    a <- runif(1)
+    b <- runif(1)
+    par <- c(a = a, b = b)
+
+    f <-function(theta) neg_log_likelihood(theta, obs, modele.parapluie)
+    traceCauchy <- captureThetaCauchy(par, f)
+    qN[i] <- ncol(traceCauchy) - 1
+
+    em <- EM(par, obs, modele.parapluie, M.step.parapluie, 40)
+    em_theta <- em$Theta[, apply(em$Theta, 2, function(x) !all(is.na(x)))]
+    BW[i] <- ncol(em_theta)
+
+    squarem <- SQUAREM(par, obs, modele.parapluie, M.step.parapluie, lower = c(0,0), upper = c(1,1), 40)
+    sq_theta <- squarem[, apply(squarem, 2, function(x) !all(is.na(x)))]
+    SQ[i] <- ncol(sq_theta)
+  }
+ return(list(BW = BW , SQUAREM = SQ, qN = qN))
+}
+
+test.time <- function(theta, obs, it){
+
+
+  #BW
+  debut <- Sys.time()
+  for(i in 1:it){
+    X <- sample(obs)
+
+    em <- EM(theta, X, modele.parapluie, M.step.parapluie, 40)
+
+  }
+  fin <- Sys.time()
+  BW <- fin - debut
+
+  #SQUAREM
+
+  debut <- Sys.time()
+  for(i in 1:it){
+    X <- sample(obs)
+
+    squarem <- SQUAREM(par, obs, modele.parapluie, M.step.parapluie, lower = c(0,0), upper = c(1,1), 40)
+  }
+  fin <- Sys.time()
+  SQ <- fin - debut
+
+  #qN
+  debut <- Sys.time()
+  for(i in 1:it){
+    X <- sample(obs)
+
+    f <-function(par) neg_log_likelihood(par, X, modele.parapluie)
+    traceCauchy <- captureThetaCauchy(theta, f)
+
+
+  }
+  fin <- Sys.time()
+  qN <- fin - debut
+
+
+
+  return(list(BW = BW , SQUAREM = SQ, qN = qN))
+}
+
+
+
 if(FALSE) {
 # Exemple d'utilisation :
 
@@ -35,22 +105,43 @@ X <- c(1, 1, 2, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 1, 2, 2, 1, 1, 1, 1,
 # nos paramètres a et b d'initialisation :
 par <- c(a = 0.3, b = 0.15)
 
-# maximisation directe
+# maximisation directe avec calcul du forward en probabilites conditionnelles
 f <-function(theta) neg_log_likelihood(theta, X, modele.parapluie)
-optim( c(0.30, 0.15), f, method = "L-B", lower = c(0,0)+0.01, upper = c(1,1) )
+optim( par, f, method = "L-B", lower = c(0,0)+0.01, upper = c(1,1))
+trace <- captureTheta(par, f)
+traceCauchy <- captureThetaCauchy(par, f)
 
-f2 <- function(theta) neg_log_likelihood_Thompson(theta, X, modele.parapluie)
-optim( c(0.30, 0.15), f2, method = "L-B", lower = c(0,0)+0.01, upper = c(1,1) )
+# maximisation directe avec calcul du forward en probabilites jointes
+f2 <-function(theta) neg_log_likelihood_Thompson(theta, X, modele.parapluie)
+optim( par, f2, method = "L-B", lower = c(0,0)+0.1, upper = c(1,1)-0.1 )
+trace2 <- captureTheta(par, f2)
+traceCauchy2 <- captureThetaCauchy(par, f2)
 
 # EM
-em <- EM(par, X, modele.parapluie, M.step.parapluie, 20)
+em <- EM(par, X, modele.parapluie, M.step.parapluie, 40)
 
 # SQUAREM
-squarem <- SQUAREM(par, X, modele.parapluie, M.step.parapluie, lower = c(0,0), upper = c(1,1), 20)
+squarem <- SQUAREM(par, X, modele.parapluie, M.step.parapluie, lower = c(0,0), upper = c(1,1), 40)
 
 par(mfrow = c(2,1))
-plot( em$Theta[1,] , type = "o", ylim = range(em$Theta[1,], squarem[1,]))
-lines( squarem[1,], type = "o", col = "red")
-plot( em$Theta[2,] , type = "o", ylim = range(em$Theta[2,], squarem[2,]))
-lines( squarem[2,], type = "o", col = "red")
+plot( em$Theta[1,1:19] , type = "o", ylim = range(em$Theta[1,1:19], squarem[1,1:23], traceCauchy[1,1:19]), col = "#4080c0", main = "Each values tested by the 3 algorithms for the parameter a")
+lines( squarem[1,1:23], type = "o", col = "#c09140")
+lines( traceCauchy[1,1:19], type = "o", col = "#c05140")
+legend("topright", cex = 1, legend = c("Baum-Welch", "SQUAREM", "quasi-Newton"), col = c("#4080c0", "#c09140", "#c05140"), pch="o")
 
+plot( em$Theta[2,1:19] , type = "o", ylim = range(em$Theta[2,1:19], squarem[2,1:23], traceCauchy[2,1:19]), col = "#4080c0", main = "Each values tested by the 3 algorithms for the parameter b")
+lines( squarem[2,1:23], type = "o", col = "#c09140")
+lines( traceCauchy[2,1:19], type = "o", col = "#c05140")
+#legend("topright", legend = c("Baum-Welch", "SQUAREM", "quasi-Newton"), col = c("#4080c0", "#c09140", "#c05140"), pch="o")
+
+
+#test du nombre d'iterations necessaires avec des points de départ différents
+set.seed(28)
+nb_it <- test.init(X, 5000)
+
+#test du temps
+set.seed(28)
+temps <- test.time(par, obs = X, it = 5000)
+
+
+}
