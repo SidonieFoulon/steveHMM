@@ -58,6 +58,9 @@ SQUAREM <- function(theta, obs, modele.fun, M.step.fun, lower, upper, max.iter, 
     # computing log likelihood
     # first for the last theta
     ll0 <- sum(log(colSums(fo$alpha * mod$p.emiss)))
+
+    # capping beta
+    if(beta > 2) beta <- 2
     # now for the potential new theta, until it's higher than ll0
     repeat { # backtracking loop
       theta1 <- squarem.proposal(U, beta)
@@ -71,7 +74,7 @@ SQUAREM <- function(theta, obs, modele.fun, M.step.fun, lower, upper, max.iter, 
         fo <- forward(mod)
         ll1 <- sum(log(colSums(fo$alpha * mod$p.emiss)))
       }
-      if(ll1 > ll0) { # accept proposal
+      if(ll1 >= ll0) { # accept proposal
         theta <- theta1
         U[,1] <- theta # it's our new starting point
         # take advantage that the forward has been done already to finish the E step
@@ -98,6 +101,12 @@ SQUAREM <- function(theta, obs, modele.fun, M.step.fun, lower, upper, max.iter, 
       }
       # else, backtracking
       beta <- beta/2
+# cat("backtracking beta =", beta, "\n")
+      if(beta <= 0.25) { # we bactracked too far, going back to EM
+        beta <- 0
+        U[,1:2] <- U[,2:3] # shift U, readdy for going back to beginning of "big loop"
+        break
+      }
     }
   }
 }
@@ -107,6 +116,7 @@ squarem.beta <- function(U) {
   r <- U[,2] - U[,1] 
   v <- U[,3] - 2*U[,2] +  U[,1]
   beta <- sqrt(sum(r**2)) / sqrt(sum(v**2)) - 1
+  # cat("beta = ", beta, "\n")
   beta
 }
 

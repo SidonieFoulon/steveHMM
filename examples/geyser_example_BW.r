@@ -1,7 +1,11 @@
 ## on note : S in {Court : 1 ; Long : 2 ; Long stable : 3}
 ##           X in {Duree < 3min : 1 ; Duree >= 3min : 2}
 
-p.stationnaire <- function(a,b) c( c = (1-b), l = (1-a)*(1-b), ls = a ) / (2 - 2*b + a*b)
+p.stationnaire <- function(a,b) {
+  pi <- c( (1-b), (1-a)*(1-b), a ) / (2 - 2*b + a*b)
+  names(pi) <- c("c", "l", "ls")
+  pi
+}
 
 modele.geyser <- function(theta, obs, name.S = c("Court", "Long", "Long stable")) {
   # parametre de la matrice de transition
@@ -54,15 +58,11 @@ modele.geyser.continu <- function(theta = c(a = 0.31, b = 0.46, muc = 1.98, mul 
 
 M.step.geyser <- function(obs, backward) {
   l <- ncol(backward$phi)
-  div0 <- function(x,y) ifelse(y == 0, 0, x / y)
   #a = proba de changement d'état de "Court" à "Long stable" (->trans)
-  #a <- sum( div0(backward$delta[1,3,-1] , backward$phi[1,-l])) / sum( backward$phi[1,-l])
-  a <- div0(sum(backward$delta[1,3,-1]) , sum(backward$phi[1,-l]))
+  a <- sum(backward$delta[1,3,-1]) / sum(backward$phi[1,-l])
 
   #b = proba de passage d'état de "Long stable" à "Long stable" (->trans)
-  #b <- sum( div0(backward$delta[3,3,-1], backward$phi[3,-l])) / sum(backward$phi[3,-l])
-  b <- div0(sum(backward$delta[3,3,-1]), sum(backward$phi[3,-l]))
-
+  b <- sum(backward$delta[3,3,-1]) / sum(backward$phi[3,-l])
 
   #c = proba de durée >= 3min chez les "Courts" (->emiss)
   c <- sum(backward$phi[1,which(obs==2)]) / sum(backward$phi[1,])
@@ -80,10 +80,10 @@ M.step.geyser.continu <- function(obs, backward) {
   l <- ncol(backward$phi)
 
   #a = proba de changement d'état de "Court" à "Long stable" (->trans)
-  a <- (sum(backward$delta[1,3,])) / (l-1)
+  a <- sum(backward$delta[1,3,-1]) / sum(backward$phi[1,-l])
 
   #b = proba de passage d'état de "Long stable" à "Long stable" (->trans)
-  b <- (sum(backward$delta[3,3,])) / (l-1)
+  b <- sum(backward$delta[3,3,-1]) / sum(backward$phi[3,-l])
 
   #esperance de la loi normale pour les etats "court" et "Long", la proba pour l'état "Long stable" en découlera (->emiss)
   muc <- sum(backward$phi[1,] * obs) / sum(backward$phi[1,])
@@ -94,19 +94,21 @@ M.step.geyser.continu <- function(obs, backward) {
 
   #ecart-type de la loi normale pour les etats "court" et "Long", la proba pour l'état "Long stable" en découlera (->emiss)
   varc <- (sum(backward$phi[1,] * (obs**2)) / sum(backward$phi[1,])) - (muc**2)
-  sdc <- sqrt(varc)
+  sdc <- sqrt(ifelse(varc > 0, varc, 0))
 
   varl <- (sum(backward$phi[2,] * (obs**2)) / sum(backward$phi[2,])) - (mul**2)
-  sdl <- sqrt(varl)
+  sdl <- sqrt(ifelse(varl > 0, varl, 0))
 
   varls <- (sum(backward$phi[3,] * (obs**2)) / sum(backward$phi[3,])) - (muls**2)
-  sdls <- sqrt(varls)
+  sdls <- sqrt(ifelse(varls > 0, varls, 0))
 
-  c(a = a, b = b, muc = muc, mul = mul, muls = muls, sdc = sdc, sdl = sdl, sdls = sdls)
+  r <- c(a = a, b = b, muc = muc, mul = mul, muls = muls, sdc = sdc, sdl = sdl, sdls = sdls)
+  r[is.na(r)] <- 0
+  r
 }
 
 
-test.init <- function(obs, it){
+test.init <- function(obs, it, max.iter = 1500){
   qN <- vector(length = it)
   BW <- vector(length = it)
   SQ <- vector(length = it)
@@ -122,19 +124,19 @@ test.init <- function(obs, it){
     qN[i] <- ncol(traceCauchy)
 
     print("Debut EM")
-    em <- EM(par, obs, modele.geyser, M.step.geyser, 100)
+    em <- EM(par, obs, modele.geyser, M.step.geyser, max.iter)
     em_theta <- em$Theta[, apply(em$Theta, 2, function(x) !all(is.na(x)))]
     BW[i] <- ncol(em_theta)
 
     print("Debut SQ")
-    squarem <- SQUAREM(par, obs, modele.geyser, M.step.geyser, lower = c(0,0,0,0,0), upper = c(1,1,1,1,1), 100)
+    squarem <- SQUAREM(par, obs, modele.geyser, M.step.geyser, lower = c(0,0,0,0,0), upper = c(1,1,1,1,1), max.iter)
     sq_theta <- squarem[, apply(squarem, 2, function(x) !all(is.na(x)))]
     SQ[i] <- ncol(sq_theta)
   }
   return(list(BW = BW , SQUAREM = SQ, qN = qN))
 }
 
-if(TRUE) {
+if(FALSE) {
 # Exemple d'utilisation :
 #source("forward.r")
 #source("backward.r")
