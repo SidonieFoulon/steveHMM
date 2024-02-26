@@ -2,9 +2,7 @@
 ##           X in {Duree < 3min : 1 ; Duree >= 3min : 2}
 
 p.stationnaire <- function(a,b) {
-  pi <- c( (1-b), (1-a)*(1-b), a ) / (2 - 2*b + a*b)
-  names(pi) <- c("c", "l", "ls")
-  pi
+  c( c = (1-b), l = (1-a)*(1-b), ls = a ) / (2 - 2*b + a*b)
 }
 
 modele.geyser <- function(theta, obs, name.S = c("Court", "Long", "Long stable")) {
