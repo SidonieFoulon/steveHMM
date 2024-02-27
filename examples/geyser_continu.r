@@ -24,8 +24,8 @@ modele.geyser.continu <- function(theta = c(a = 0.31, b = 0.46, muc = 1.98, mul 
   p.emiss <- rbind(p.emiss.c, p.emiss.l, p.emiss.ls)
   rownames(p.emiss) <- name.S
 
-  # etat stationnaire, ne dépend pas de a
-  pi <- p.stationnaire(a,b)
+  # etat stationnaire
+  pi <- c( c = (1-b), l = (1-a)*(1-b), ls = a ) / (2 - 2*b + a*b)
 
   list(trans = trans, pi = pi, p.emiss = p.emiss)
 }
