@@ -5,8 +5,8 @@
 # upper, lower = comme dans optim
 # max.iter = max iterations
 # epsilon = critere de convergence
-SQUAREM <- function(theta, obs, modele.fun, M.step.fun, lower, upper, max.iter = 100, track.theta = TRUE, epsilon = 1e-5) {
-  if(is.infinite(max.iter)) track.theta <- FALSE
+SQUAREM <- function(theta, obs, modele.fun, M.step.fun, lower, upper, max.iter = 100, trace.theta = TRUE, epsilon = 1e-5) {
+  if(is.infinite(max.iter)) trace.theta <- FALSE
 
   l <- length(obs)
   if(missing(lower)) lower <- rep(-Inf, length(theta))
@@ -15,13 +15,13 @@ SQUAREM <- function(theta, obs, modele.fun, M.step.fun, lower, upper, max.iter =
     stop("Bad starting point")
 
   # to keep all iterates
-  if(track.theta) {
+  if(trace.theta) {
     Theta <- matrix(NA_real_, ncol = max.iter, nrow = length(theta))
     rownames(Theta) <- names(theta)
     Theta[,1] <- theta
   }
 
-  # keep track of forward / backward calls
+  # keep trace of forward / backward calls
   nb.fw <- 0L
   nb.bw <- 0L
 
@@ -38,8 +38,8 @@ SQUAREM <- function(theta, obs, modele.fun, M.step.fun, lower, upper, max.iter =
 
   theta <- M.step.fun(obs, ba)
   U[,2] <- theta
-  # *** keep track of theta ***
-  if(track.theta) Theta[,2] <- theta
+  # *** keep trace of theta ***
+  if(trace.theta) Theta[,2] <- theta
   k <- 3
  
   EXIT <- FALSE 
@@ -54,8 +54,8 @@ SQUAREM <- function(theta, obs, modele.fun, M.step.fun, lower, upper, max.iter =
 
       theta <- M.step.fun(obs, ba)
       U[,3] <- theta
-      # *** keep track of theta ***
-      if(track.theta) Theta[,k] <- theta
+      # *** keep trace of theta ***
+      if(trace.theta) Theta[,k] <- theta
       k <- k+1;
       if(k > max.iter) {
         EXIT <- TRUE
@@ -99,8 +99,8 @@ SQUAREM <- function(theta, obs, modele.fun, M.step.fun, lower, upper, max.iter =
       if(ll1 >= ll0) { # accept proposal
         theta <- theta1
 
-        # *** keep track of theta ***
-        if(track.theta) Theta[,k] <- theta
+        # *** keep trace of theta ***
+        if(trace.theta) Theta[,k] <- theta
         k <- k+1;
         if(k > max.iter) {
           EXIT <- TRUE
@@ -116,8 +116,8 @@ SQUAREM <- function(theta, obs, modele.fun, M.step.fun, lower, upper, max.iter =
         # M step
         theta <- M.step.fun(obs, ba)
         U[,2] <- theta
-        # *** keep track of theta ***
-        if(track.theta) Theta[,k] <- theta
+        # *** keep trace of theta ***
+        if(trace.theta) Theta[,k] <- theta
         k <- k+1;
         if(k > max.iter) {
           EXIT <- TRUE
@@ -143,7 +143,7 @@ SQUAREM <- function(theta, obs, modele.fun, M.step.fun, lower, upper, max.iter =
   }
   # EXIT is true !
   R <- list(theta = theta, iter = k-1, forwards = nb.fw, backwards = nb.bw)
-  if(track.theta) R$Theta <- Theta[, 1:(k-1) ]
+  if(trace.theta) R$Theta <- Theta[, 1:(k-1) ]
   R
 }
 
