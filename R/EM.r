@@ -4,14 +4,18 @@
 # modele.fun = une fonction "modèle"
 # M.step.fun = une fonction M step (input : obs, backward, output : theta)
 # it = iterations
-EM <- function(theta, obs, modele.fun, M.step.fun, max.iter, epsilon = 1e-5){
+EM <- function(theta, obs, modele.fun, M.step.fun, max.iter = 100, trace.theta = TRUE, epsilon = 1e-5){
+  if(is.infinite(max.iter)) trace.theta <- FALSE
   l <- length(obs)
 
-  Theta <- matrix(NA_real_, ncol = max.iter, nrow = length(theta))
-  rownames(Theta) <- names(theta)
-  Theta[,1] <- theta
-
-  for(i in 2:max.iter){
+  if(trace.theta) {
+    Theta <- matrix(NA_real_, ncol = max.iter, nrow = length(theta))
+    rownames(Theta) <- names(theta)
+    Theta[,1] <- theta
+  }
+ 
+  i <- 2
+  repeat {
     mod <- modele.fun(theta, obs)
 
     # Etape E
@@ -19,14 +23,17 @@ EM <- function(theta, obs, modele.fun, M.step.fun, max.iter, epsilon = 1e-5){
     ba <- backward(mod, fo)
 
     # Etape M
-    theta <- M.step.fun(obs, ba)
+    theta1 <- M.step.fun(obs, ba)
+    e <- sqrt( sum((theta1 - theta)**2) )
+    theta <- theta1
 
-    Theta[,i] <- theta
-    if( sqrt(sum((theta - Theta[,i-1])^2)) < epsilon)
-      break;
+    if(trace.theta) Theta[,i] <- theta
+    if(e < epsilon | i == max.iter) break;
+    i <- i+1
   }
-  Theta <- Theta[, apply(Theta, 2, function(x) !all(is.na(x)))]
-  return(list(Theta = Theta, mod = mod, fb = c(fo, ba)))
+  R <- list(theta = theta, iter = i)
+  if(trace.theta) R$Theta <- Theta[, 1:i ]
+  R
 }
 
 
