@@ -75,11 +75,6 @@ f <-function(theta) neg_log_likelihood(theta, X, modele.geyser.continu)
 optim( par, f, method = "L-B", lower = c(0,0), upper = c(1,1) )
 traceCauchy <- captureThetaCauchy(par, f, low = c(0,0), up = c(1,1))
 
-# maximisation directe avec calcul du forward en probabilites jointes
-f2 <-function(theta) neg_log_likelihood_Thompson(theta, X, modele.geyser.continu)
-optim( par, f2, method = "L-B", lower = c(0,0) + 0.1, upper = c(1,1) - 0.1)
-traceCauchy2.dich <- captureThetaCauchy(par.dich, f2, low = c(0,0)+ 0.01, up = c(1,1) - 0.01)
-
 # EM
 em.dich <- EM(par.dich, X.dich, modele.geyser, M.step.geyser, 20)
 

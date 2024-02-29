@@ -9,9 +9,7 @@ modele.HBD <- function(theta, obs, name.S = c("nHBD", "HBD"), d = 0.1, pa = runi
   colnames(trans) <- rownames(trans) <- name.S
 
   # stationnary distribution
-  x <- (f * (exp(-a*d) - 1) - exp(-a*d) + 1) / (1 - exp(-a*d))
-  y <- 1-x
-  stat <- c(nHBD = x, HBD = y)
+  stat <- c(nHBD = 1-f, HBD = f)
 
   # emission probas are not re estimated : depends on alternative allele freq pa and genotypic error eps
   pA <- 1-pa
