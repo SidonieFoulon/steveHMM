@@ -30,21 +30,17 @@ test.init <- function(obs, it){
   SQ <- vector(length = it)
 
   for(i in 1:it){
-    a <- runif(1)
-    b <- runif(1)
-    par <- c(a = a, b = b)
+    print(i)
+    par <- runif(2)
 
     f <-function(theta) neg_log_likelihood(theta, obs, modele.parapluie)
-    traceCauchy <- captureThetaCauchy(par, f)
-    qN[i] <- ncol(traceCauchy) - 1
+    qN[i] <- quasi_newton(par, obs, modele.parapluie, lower = c(0,0)+1e-2, upper = c(1,1)-1e-2)$counts[1]
 
-    em <- EM(par, obs, modele.parapluie, M.step.parapluie, 40)
-    em_theta <- em$Theta[, apply(em$Theta, 2, function(x) !all(is.na(x)))]
-    BW[i] <- ncol(em_theta)
+    em <- EM(par, obs, modele.parapluie, M.step.parapluie, max.iter = Inf, trace.theta = FALSE)
+    BW[i] <- em$iter
 
-    squarem <- SQUAREM(par, obs, modele.parapluie, M.step.parapluie, lower = c(0,0), upper = c(1,1), 40)
-    sq_theta <- squarem[, apply(squarem, 2, function(x) !all(is.na(x)))]
-    SQ[i] <- ncol(sq_theta)
+    squarem <- SQUAREM(par, obs, modele.parapluie, M.step.parapluie, lower = c(0,0), upper = c(1,1), max.iter = Inf, trace.theta = FALSE)
+    SQ[i] <- squarem$iter
   }
  return(list(BW = BW , SQUAREM = SQ, qN = qN))
 }
@@ -53,34 +49,44 @@ test.time <- function(theta, obs, it){
 
 
   #BW
-  debut <- Sys.time()
+  cpt <- 0
   for(i in 1:it){
+    print(i)
     X <- sample(obs)
-    em <- EM(theta, X, modele.parapluie, M.step.parapluie, 1000)
+    debut <- Sys.time()
+    EM(theta, X, modele.parapluie, M.step.parapluie, max.iter = 1000, trace.theta = FALSE)
+    fin <- Sys.time()
+    cpt <- cpt + (fin-debut)
   }
-  fin <- Sys.time()
-  BW <- fin - debut
+
+  BW <- cpt
 
   #SQUAREM
 
-  debut <- Sys.time()
+  cpt <- 0
   for(i in 1:it){
+    print(i)
     X <- sample(obs)
-    squarem <- SQUAREM(theta, X, modele.parapluie, M.step.parapluie, lower = c(0,0), upper = c(1,1), 1000)
+    debut <- Sys.time()
+    SQUAREM(theta, X, modele.parapluie, M.step.parapluie, lower = c(0,0), upper = c(1,1), max.iter = 1000, trace.theta = FALSE)
+    fin <- Sys.time()
+    cpt <- cpt + (fin-debut)
   }
-  fin <- Sys.time()
-  SQ <- fin - debut
+
+  SQ <- cpt
 
   #qN
-  debut <- Sys.time()
+  cpt <- 0
   for(i in 1:it){
+    print(i)
     X <- sample(obs)
-    qN <- capture_quasi_newton(theta, X, modele.parapluie, lower = c(0,0)+0.01, upper = c(1,1)-0.01, trace = TRUE)
-
-
+    debut <- Sys.time()
+    quasi_newton(theta, X, modele.parapluie, trace = FALSE, lower = c(0,0)+1e-2, upper = c(1,1)-1e-2)
+    fin <- Sys.time()
+    cpt <- cpt + (fin-debut)
   }
-  fin <- Sys.time()
-  qN <- fin - debut
+
+  qN <- cpt
 
 
 
@@ -94,12 +100,12 @@ X.parapluie <- c(1, 1, 2, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 1, 2, 2, 1, 1, 1, 1,
     2, 2, 1, 2, 2, 1, 2, 2, 2, 2, 2, 1, 2, 2, 2)
 
 
-if(FALSE) {
+
 # Exemple d'utilisation :
 
 # nos paramètres a et b d'initialisation :
 par.parapluie <- c(a = 0.3, b = 0.15)
-
+if(FALSE) {
 # maximisation directe avec calcul du forward en probabilites conditionnelles
 f <-function(theta) neg_log_likelihood(theta, X.parapluie, modele.parapluie)
 optim( par.parapluie, f, method = "L-B", lower = c(0,0)+0.01, upper = c(1,1))

@@ -64,26 +64,54 @@ M.step.geyser.continu <- function(obs, backward) {
 if(FALSE) {
 # nos observations continues :
 library(MASS)
-X <- geyser$duration
+X.geyser <- faithful$duration
 
 # nos paramètres a et b et paramètres des lois normales d'initialisation :
-par <- c(a = 0.31, b = 0.46, muc = 1.98, mul = 4.26, muls = 4.26, sdc = 0.28, sdl = 0.39, sdls = 0.39)
+par.geyser <- c(a = 0.31, b = 0.46, muc = 1.98, mul = 4.26, muls = 4.26, sdc = 0.28, sdl = 0.39, sdls = 0.39)
 
 
 # maximisation directe avec calcul du forward en probabilites conditionnelles
-f <-function(theta) neg_log_likelihood(theta, X, modele.geyser.continu)
-optim( par, f, method = "L-B", lower = c(0,0), upper = c(1,1) )
-traceCauchy <- captureThetaCauchy(par, f, low = c(0,0), up = c(1,1))
+f <-function(theta) neg_log_likelihood(theta, X.geyser, modele.geyser.continu)
+optim( par.geyser, f, method = "L-B", lower = c(0,0), upper = c(1,1) )
+trace <- captureTheta(par.geyser, f)
+traceCauchy <- captureThetaCauchy(par.geyser, f)
+fulltrace <- capture_optim( par.geyser, f, method = "L-B", lower = c(0,0)+0.01, upper = c(1,1))
 
 # EM
-em.dich <- EM(par.dich, X.dich, modele.geyser, M.step.geyser, 20)
+em <- EM(par.geyser, X.geyser, modele.geyser, M.step.geyser, 200)
 
 # SQUAREM
-squarem.dich <- SQUAREM(par.dich, X.dich, modele.geyser, M.step.geyser, lower = c(0,0), upper = c(1,1), 20)
+squarem <- SQUAREM(par.geyser, X.geyser, modele.geyser, M.step.geyser, lower = c(0,0), upper = c(1,1), 200)
 
 # quasi newton avec dérivées
-quasi_newton(par, X, modele.geyser.continu, lower = rep(0,5)+1e-5, upper = c(1,1, rep(Inf,3)), trace = TRUE)
-
-
+quasi_newton(par.geyser, X.geyser, modele.geyser.continu, lower = rep(0,5)+1e5, upper = c(1,1, rep(Inf,3)), trace = TRUE)
+qN <- capture_quasi_newton(par.geyser, X.geyser, modele.geyser.continu, lower = rep(0,5)+1e5, upper = c(1,1, rep(Inf,3)), trace = TRUE)
+for(i in 1:ncol(qN)) {
+  if( sqrt(sum((qN[,i] - qN[,i-1])^2)) < 1e-5) print(i)
 }
+qN <- qN[, 1:22] #à ajuster
+
+
+
+#plots
+par(mfrow = c(2,1))
+plot( em$Theta[1,] , type = "o", xlim = c(0, max(ncol(em$Theta), ncol(squarem), ncol(qN))), ylim = range(em$Theta[1,], squarem[1,], qN[1,]), col = "#4080c0", main = "Each values tested by the 3 algorithms for the parameter a")
+abline(v = ncol(em$Theta), col = "#4080c0")
+lines( squarem[1,], type = "o", col = "#c09140")
+abline(v = ncol(squarem), col = "#c09140")
+lines( qN[1,], type = "o", col = "#c05140")
+abline(v = ncol(qN), col = "#c05140")
+legend("topright", cex = 1, legend = c("Baum-Welch", "SQUAREM", "quasi-Newton"), col = c("#4080c0", "#c09140", "#c05140"), pch="o")
+
+plot( em$Theta[2,] , type = "o", xlim = c(0, max(ncol(em$Theta), ncol(squarem), ncol(qN))), ylim = range(em$Theta[2,], squarem[2,], qN[2,]), col = "#4080c0", main = "Each values tested by the 3 algorithms for the parameter a")
+abline(v = ncol(em$Theta), col = "#4080c0")
+lines( squarem[2,], type = "o", col = "#c09140")
+abline(v = ncol(squarem), col = "#c09140")
+lines( qN[2,], type = "o", col = "#c05140")
+abline(v = ncol(qN), col = "#c05140")
+}
+
+
+
+
 
