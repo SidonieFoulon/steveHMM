@@ -1,0 +1,7 @@
+# H + (s'y + y' H y) / (s'y)^2 * (ss') - (H y s' + s y' H) / s'y
+H_update <- function(H, s, y) {
+  sy <- sum(s * y)
+  Hy <- H %*% y
+  yHy <- sum(y * Hy) 
+  H + (sy + yHy)/sy**2 * tcrossprod(s,s) - (tcrossprod(Hy, s) + tcrossprod(s, Hy)) / sy
+}
