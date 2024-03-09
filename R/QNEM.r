@@ -187,7 +187,7 @@ QNEM <- function(theta, obs, modele.fun, M.step.fun, max.iter = 100, upper, lowe
     if(verbose) cat("theta =", as.vector(theta), "\n")
     if(verbose) cat("neg log likelihood =", ll, "\n")
   }
-  R <- list(theta = theta, iter = i, forwards = nb.fw, backwards = nb.bw)
+  R <- list(theta = theta, neg.ll = ll, iter = i, forwards = nb.fw, backwards = nb.bw)
   if(trace.theta) R$Theta <- Theta[, 1:i ]
   R
 }
