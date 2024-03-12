@@ -45,8 +45,8 @@ M.step.geyser <- function(obs, backward) {
 }
 
 test.time.gd <- function(theta, obs, it){
-
   #qN
+
   cpt <- 0
   for(i in 1:it){
     print(i)
@@ -103,6 +103,6 @@ par.dich <- c(a = 0.31, b = 0.46, c = 0.15, d = 0.9, e = 0.9)
 
 #test du temps
 set.seed(28)
-tps_gd <- test.time.gd(par.dich, obs = X.dich, it = 5000)
+tps_gd <- test.time.gd(par.dich, obs = X.dich, it = 1000)
 tps_gd
 saveRDS(tps_gd, "/home/sidonie/Bureau/github/steveHMM/examples/tps_geyser_dicho.rds")

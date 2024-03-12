@@ -83,7 +83,7 @@ if(FALSE) {
 
 # nos observations dichotomisées :
 library(MASS)
-X.dich <- ifelse(geyser$duration < 3, 1,2)
+X.dich <- ifelse(faithful$eruptions < 3, 1,2)
 
 # nos paramètres a, b et c d'initialisation :
 par.dich <- c(a = 0.31, b = 0.46, c = 0.15, d = 0.9, e = 0.9)
@@ -100,11 +100,14 @@ optim( par.dich, f2, method = "L-B", lower = c(0,0,0)+0.01, upper = c(1,1,1)-0.0
 traceCauchy2.dich <- captureThetaCauchy(par.dich, f2, low = c(0,0,0)+ 0.01, up = c(1,1,1) - 0.01)
 
 # EM
-em.dich <- EM(par.dich, X.dich, modele.geyser, M.step.geyser, 200)
+em.dich <- EM(par.dich, X.dich, modele.geyser, M.step.geyser, max.iter = Inf)
 
 # SQUAREM
-squarem.dich <- SQUAREM(par.dich, X.dich, modele.geyser, M.step.geyser, lower = c(0,0,0,0,0), upper = c(1,1,1,1,1), 200)
+squarem.dich <- SQUAREM(par.dich, X.dich, modele.geyser, M.step.geyser, lower = c(0,0,0,0,0), upper = c(1,1,1,1,1), Inf)
 
+#quasi Newton
+quasi_newton(par.dich, X.dich, modele.geyser, lower = rep(0,5)+0.01, upper = rep(1,5)-0.01, trace = TRUE)
+qN <- capture_quasi_newton(par.dich, X.dich, modele.geyser, lower = rep(0,5)+0.01, upper = rep(1,5)-0.01, trace = TRUE)
 
 #plot
 par(mfrow = c(5,1))

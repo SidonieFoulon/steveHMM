@@ -64,7 +64,7 @@ M.step.geyser.continu <- function(obs, backward) {
 if(FALSE) {
 # nos observations continues :
 library(MASS)
-X.geyser <- faithful$duration
+X.geyser <- faithful$eruptions
 
 # nos paramètres a et b et paramètres des lois normales d'initialisation :
 par.geyser <- c(a = 0.31, b = 0.46, muc = 1.98, mul = 4.26, muls = 4.26, sdc = 0.28, sdl = 0.39, sdls = 0.39)
@@ -78,7 +78,7 @@ traceCauchy <- captureThetaCauchy(par.geyser, f)
 fulltrace <- capture_optim( par.geyser, f, method = "L-B", lower = c(0,0)+0.01, upper = c(1,1))
 
 # EM
-em <- EM(par.geyser, X.geyser, modele.geyser, M.step.geyser, 200)
+em <- EM(par.geyser, X.geyser, modele.geyser.continu, M.step.geyser.continu, max.iter = Inf)
 
 # SQUAREM
 squarem <- SQUAREM(par.geyser, X.geyser, modele.geyser, M.step.geyser, lower = c(0,0), upper = c(1,1), 200)

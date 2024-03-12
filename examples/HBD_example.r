@@ -21,7 +21,7 @@ modele.HBD <- function(theta, obs, name.S = c("nHBD", "HBD"), d = 0.1, pa = runi
 
 M.step.HBD <- function(obs, backward, d=0.1) {
   l <- ncol(backward$phi)
-
+  ba <- backward
   # first re estimate transition matrix
   t11 <- sum(ba$delta[1,1,-1]) / sum(ba$phi[1,-l])
   t12 <- sum(ba$delta[1,2,-1]) / sum(ba$phi[1,-l])
@@ -39,9 +39,18 @@ M.step.HBD <- function(obs, backward, d=0.1) {
 }
 
 
-#test on some random observations :
-
-X.HBD <- sample(1:3, 100) #we expect f ~= 0 since it is random (no consiguinity)
+#our observations :
+library(Mozza)
+if(!require("KGH")) install.packages("KGH", repos="https://genostats.github.io/R/")
+filepath <- system.file("extdata", "1KG_haplos.bed", package = "KGH")
+H <- read.bed.matrix(filepath)
+set.seed(28)
+x <- make.inbreds(1, H, f = 0.0625, a = 0.064, segments = TRUE)
+x$inbred.coef # f = 0.078 on the whole genome, not the final value to estimate since we will not work on whole genome
+x$segments # 2 HBD segments on chr 15
+bm <- x$bed.matrix
+bm <- select.snps(bm, chr == 15)
+X.HBD <- ifelse(bm@snps$N0 == 1, 1, ifelse(bm@snps$N1 == 1, 2, 3)) #we expect f ~= 0 since it is random (no consiguinity)
 theta.HBD <- c(0.05,0.05)
 
 em.HBD <- EM(theta.HBD, X.HBD, modele.HBD, M.step.HBD, 10)

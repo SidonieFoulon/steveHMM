@@ -114,10 +114,10 @@ traceCauchy <- captureThetaCauchy(par.parapluie, f)
 fulltrace <- capture_optim( par.parapluie, f, method = "L-B", lower = c(0,0)+0.01, upper = c(1,1))
 
 # EM
-em <- EM(par.parapluie, X.parapluie, modele.parapluie, M.step.parapluie, 200)
+em <- EM(par.parapluie, X.parapluie, modele.parapluie, M.step.parapluie, max.iter = 200, trace.theta = TRUE)
 
 # SQUAREM
-squarem <- SQUAREM(par.parapluie, X.parapluie, modele.parapluie, M.step.parapluie, lower = c(0,0), upper = c(1,1), 200)
+squarem <- SQUAREM(par.parapluie, X.parapluie, modele.parapluie, M.step.parapluie, lower = c(0,0), upper = c(1,1),max.iter =  200, trace.theta = TRUE)
 
 #quasi Newton
 quasi_newton(par.parapluie, X.parapluie, modele.parapluie, lower = c(0,0)+0.01, upper = c(1,1), trace = TRUE)
@@ -128,19 +128,20 @@ for(i in 1:ncol(qN)) {
 qN <- qN[, 1:22]
 
 #plots
+dev.new()
 par(mfrow = c(2,1))
-plot( em$Theta[1,] , type = "o", xlim = c(0, max(ncol(em$Theta), ncol(squarem), ncol(qN))), ylim = range(em$Theta[1,], squarem[1,], qN[1,]), col = "#4080c0", main = "Each values tested by the 3 algorithms for the parameter a")
+plot( em$Theta[1,] , type = "o", xlim = c(0, max(ncol(em$Theta), ncol(squarem$Theta), ncol(qN))), ylim = range(em$Theta[1,], squarem$Theta[1,], qN[1,]), col = "#4080c0", main = "Each values tested by the 3 algorithms for the parameter a")
 abline(v = ncol(em$Theta), col = "#4080c0")
-lines( squarem[1,], type = "o", col = "#c09140")
-abline(v = ncol(squarem), col = "#c09140")
+lines( squarem$Theta[1,], type = "o", col = "#c09140")
+abline(v = ncol(squarem$Theta), col = "#c09140")
 lines( qN[1,], type = "o", col = "#c05140")
 abline(v = ncol(qN), col = "#c05140")
 legend("topright", cex = 1, legend = c("Baum-Welch", "SQUAREM", "quasi-Newton"), col = c("#4080c0", "#c09140", "#c05140"), pch="o")
 
-plot( em$Theta[2,] , type = "o", xlim = c(0, max(ncol(em$Theta), ncol(squarem), ncol(qN))), ylim = range(em$Theta[2,], squarem[2,], qN[2,]), col = "#4080c0", main = "Each values tested by the 3 algorithms for the parameter a")
+plot( em$Theta[2,] , type = "o", xlim = c(0, max(ncol(em$Theta), ncol(squarem$Theta), ncol(qN))), ylim = range(em$Theta[2,], squarem$Theta[2,], qN[2,]), col = "#4080c0", main = "Each values tested by the 3 algorithms for the parameter b")
 abline(v = ncol(em$Theta), col = "#4080c0")
-lines( squarem[2,], type = "o", col = "#c09140")
-abline(v = ncol(squarem), col = "#c09140")
+lines( squarem$Theta[2,], type = "o", col = "#c09140")
+abline(v = ncol(squarem$Theta), col = "#c09140")
 lines( qN[2,], type = "o", col = "#c05140")
 abline(v = ncol(qN), col = "#c05140")
 
