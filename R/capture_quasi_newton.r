@@ -5,8 +5,8 @@ capture_quasi_newton <- function(...) {
   trace <- capture.output( do.call(quasi_newton, L) )
 
   tr1 <- trace[grep( "^(Cauchy X|theta) =", trace ) ]
-  pts <- sapply(tr1, getval, USE.NAMES=FALSE)
-  colnames(pts) <- sapply(tr1, getname)
+  pts <- sapply(tr1, getval, USE.NAMES = FALSE)
+  colnames(pts) <- sapply(tr1, getname, USE.NAMES = FALSE)
   pts
 }
 

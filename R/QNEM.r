@@ -3,9 +3,17 @@
 # modele.fun = une fonction "modèle"
 # M.step.fun = une fonction M step (input : obs, backward, output : theta)
 # it = iterations
-QNEM <- function(theta, obs, modele.fun, M.step.fun, max.iter = 100, upper, lower, trace.theta = TRUE, reltol = sqrt(.Machine$double.eps), nb.em = length(theta), verbose = FALSE){
+QNEM <- function(theta, obs, modele.fun, M.step.fun, max.iter = 100, upper, lower, trace.theta = TRUE, reltol = sqrt(.Machine$double.eps), nb.em, verbose = FALSE){
   c.armijo <- 1e-4
   tau_backt <- .5
+  if(missing(nb.em)) {
+    if(verbose) cat("number of EM iterations determined by convexity\n")
+    auto.em <- TRUE
+    nb.em <- 0
+  } else {
+    if(verbose) cat("number of EM iterations determined by user\n")
+    auto.em <- FALSE
+  }
 
   d <- length(theta)
   if(missing(lower)) lower <- rep(-Inf, d)
@@ -41,19 +49,16 @@ QNEM <- function(theta, obs, modele.fun, M.step.fun, max.iter = 100, upper, lowe
   nb.fw <- nb.fw + 1L
   ll <- fo$value
   gradient <- fo$gradient
+  convex <- FALSE
 
   # the big loop
   repeat { 
-    if(nb.em > 0) { # EM
+    if(nb.em > 0 | (auto.em & !convex)) { # EM
       if(verbose) cat("EM step\n")
       # Finish the E step
       ba <- backward(mod, fo)
       nb.bw <- nb.bw + 1L
 
-      # update H
-      if(i > 2) {
-        if(sum(s*y) > 0) H <- H_update(H, s, y)
-      }
       # Etape M
       theta1 <- M.step.fun(obs, ba)
 
@@ -65,18 +70,32 @@ QNEM <- function(theta, obs, modele.fun, M.step.fun, max.iter = 100, upper, lowe
       # this should be a correct way to deal with this
       theta1 <- ifelse(is.na(theta1), theta, theta1)
 
-      # end of loop : update vars
-      s <- theta1 - theta
-      y <- fo$gradient - gradient
-      theta <- theta1
-      nb.em <- nb.em - 1
-      # prépare la boucle suivante
-      mod <- modele_derivatives(modele.fun, theta, obs)
+      # on commence à préparer la boucle suivante
+      mod <- modele_derivatives(modele.fun, theta1, obs)
       fo <- forward_ll(mod, TRUE)
       nb.fw <- nb.fw + 1L
-      rel.ll <- abs(ll - fo$value) / (abs(ll) + reltol)
-      ll <- fo$value
-      gradient  <- fo$gradient
+      ll1 <- fo$value
+      gradient1 <- fo$gradient
+
+      # record changes     
+      s <- theta1 - theta
+      y <- gradient1 - gradient
+      rel.ll <- abs(ll - ll1) / (abs(ll) + reltol)
+
+      # update H if convex
+      if(sum(s*y) > 0) {
+        if(verbose) cat("locally convex region\n")
+        convex <- TRUE
+        H <- H_update(H, s, y)
+      }
+
+      # update current point
+      theta <- theta1
+      gradient  <- gradient1    
+      ll <- ll1
+
+      # prêt...
+      nb.em <- nb.em - 1
       QN <- FALSE
     } else { # QN
       if(verbose) cat("QN\n")
@@ -93,7 +112,7 @@ QNEM <- function(theta, obs, modele.fun, M.step.fun, max.iter = 100, upper, lowe
         theta <- ifelse(under, lower, theta)
         # on met à jour la liste des variables bloquées 
         # [on regarde le gradient pour voir si c'est un vrai blocage]
-        I1 <- which((over & gradient < 0) | (under & gradient > 0))
+        I1 <- which((over & gradient <= 0) | (under & gradient >= 0))
         I <- union(I, I1)
         J <- setdiff(J, I1)
         H <- restrict_inverse(H, I) # projection of H
@@ -123,6 +142,7 @@ QNEM <- function(theta, obs, modele.fun, M.step.fun, max.iter = 100, upper, lowe
       blocked.value <- ifelse(p >=0, upper, lower)
       lambda.max <- min(lambda.i.max[J], na.rm = TRUE)  # [J] : only unblocked vars
       if(lambda.max <= 0) { # ne devrait pas arriver
+browser()
         stop("blocage non repéré")
       }
       lambda <- min(1, lambda.max)
@@ -139,11 +159,12 @@ QNEM <- function(theta, obs, modele.fun, M.step.fun, max.iter = 100, upper, lowe
         ll1 <- if(is.na(fo1$value)) Inf else fo1$value
         gradient1 <- fo1$gradient
         gradient1[I] <- 0
+        rel.ll <- abs(ll - ll1) / (abs(ll) + reltol)
         # Armijo rule
         if(ll1 <= ll + c.armijo * lambda * p.grad)
           break
-        if(ll1 == ll) { # we may have converged...
-          theta1 <- theta # don't move any more (will force an EM step)
+        if(rel.ll < reltol) { # we may have converged...
+          # theta1 <- theta # don't move any more (will force an EM step)
           break
         }
         lambda <- lambda * tau_backt
@@ -155,7 +176,8 @@ QNEM <- function(theta, obs, modele.fun, M.step.fun, max.iter = 100, upper, lowe
       y <- gradient1 - gradient
       if(sum( (s*y)[J] ) <= 0) { # curvature condition [catches also the case theta1 = theta]
         if(verbose) cat("Non convex spot\n")
-        nb.em <- 1
+        convex <- FALSE
+        # nb.em <- 1
       } else {
         H <- H_update(H, s, y)
         # ------ if new wariables are blocked -----
@@ -168,7 +190,6 @@ QNEM <- function(theta, obs, modele.fun, M.step.fun, max.iter = 100, upper, lowe
         }
       }
       # update loop variables
-      rel.ll <- abs(ll - ll1) / (abs(ll) + reltol)
       ll <- ll1
       fo <- fo1
       theta <- theta1
@@ -176,7 +197,7 @@ QNEM <- function(theta, obs, modele.fun, M.step.fun, max.iter = 100, upper, lowe
       QN <- TRUE
     }
     if(trace.theta) Theta[,i] <- theta
-    if(QN & nb.em > 0) { # in QN, decided to force at least one EM step 
+    if((QN & auto.em & !convex) | (QN & nb.em > 0)) { # in QN, decided to force at least one EM step 
       I <- integer(0)
       J <- seq_along(theta)
       H <- matrix(NA_real_, d, d)
