@@ -59,6 +59,12 @@ QNEM <- function(theta, obs, modele.fun, M.step.fun, max.iter = 100, upper, lowe
       ba <- backward(mod, fo)
       nb.bw <- nb.bw + 1L
 
+      if(any(is.na(ba$phi))) {
+        warning("Forward / backward step failed")
+        i <- i-1
+        break
+      }
+
       # Etape M
       theta1 <- M.step.fun(obs, ba)
 
@@ -68,15 +74,27 @@ QNEM <- function(theta, obs, modele.fun, M.step.fun, max.iter = 100, upper, lowe
 
       # in some cases, the M step produces NA's (e.g. conditionnal probabilities computed as 0/0)
       # this should be a correct way to deal with this
+      # when a latent state has probability 0, 
+      # some of the parameters may be undefined: keep last value
       theta1 <- ifelse(is.na(theta1), theta, theta1)
 
       # on commence à préparer la boucle suivante
       mod <- modele_derivatives(modele.fun, theta1, obs)
       fo <- forward_ll(mod, TRUE)
+
       nb.fw <- nb.fw + 1L
       ll1 <- fo$value
       gradient1 <- fo$gradient
 
+      # can happen near the border
+      if(any(is.na(gradient1))) {
+        gradient1[] <- 0
+      }
+      if(is.na(ll1)) {
+        warning("Forward / backward step failed")
+        # this will interrupt the loop
+        ll1 <- ll
+      }
       # record changes     
       s <- theta1 - theta
       y <- gradient1 - gradient
@@ -161,12 +179,8 @@ browser()
         gradient1[I] <- 0
         rel.ll <- abs(ll - ll1) / (abs(ll) + reltol)
         # Armijo rule
-        if(ll1 <= ll + c.armijo * lambda * p.grad)
+        if(ll1 <= ll + c.armijo * lambda * p.grad | rel.ll < reltol)
           break
-        if(rel.ll < reltol) { # we may have converged...
-          # theta1 <- theta # don't move any more (will force an EM step)
-          break
-        }
         lambda <- lambda * tau_backt
         if(verbose) cat("backtracking\n")
       }
