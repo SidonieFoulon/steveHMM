@@ -8,7 +8,7 @@ D <- data.frame(theta1 = numeric(100), theta2 = numeric(100),
 for(i in 1:100) { 
   set.seed(i); 
   cat("\n***************", i, "************* \n")
-  qn <- QNEM(runif(2), X.parapluie, modele.parapluie, M.step.parapluie, lower = c(0,0), upper = c(1,1))
+  qn <- QNEM(runif(2), X.parapluie, modele.parapluie, M.step.parapluie, lower = c(0,0), upper = c(1,1), verbose = TRUE)
   D[i,1:2] <- qn$theta
   D$neg.ll[i] <- qn$neg.ll
   D$iter[i] <- qn$iter

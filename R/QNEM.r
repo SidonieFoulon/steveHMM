@@ -120,7 +120,7 @@ QNEM <- function(theta, obs, modele.fun, M.step.fun, max.iter = 100, upper, lowe
       if(any(is.na(H))) { # aucun pas d'EM n'a updaté H
         H <- diag(d)
       }
-      # on peut arriver ici sans savoir que des variables sont bloqués
+      # on peut arriver ici sans savoir que des variables sont bloquées
       # [ l'EM ne maintient pas I et J à jour ]
       over  <- (theta >= upper)
       under <- (theta <= lower)
@@ -135,7 +135,7 @@ QNEM <- function(theta, obs, modele.fun, M.step.fun, max.iter = 100, upper, lowe
         J <- setdiff(J, I1)
         H <- restrict_inverse(H, I) # projection of H
       }
-      # est-ce que des variables peuvent être débloqués ?
+      # est-ce que des variables peuvent être débloquées ?
       I1 <- which( (over & gradient > 0) | (under & gradient) < 0)
       if(any(I1 %in% I)) {
         I <- setdiff(I, I1)
@@ -144,7 +144,7 @@ QNEM <- function(theta, obs, modele.fun, M.step.fun, max.iter = 100, upper, lowe
       }
       # if some variables are blocked, project the gradient
       gradient[I] <- 0
-      if( sum(gradient**2) == 0 ) { # if it happens, the backtracking loop is infinitee
+      if( sum(gradient**2) == 0 ) { # if it happens, the backtracking loop is infinite
         break
       }
 
@@ -160,12 +160,13 @@ QNEM <- function(theta, obs, modele.fun, M.step.fun, max.iter = 100, upper, lowe
       blocked.value <- ifelse(p >=0, upper, lower)
       lambda.max <- min(lambda.i.max[J], na.rm = TRUE)  # [J] : only unblocked vars
       if(lambda.max <= 0) { # ne devrait pas arriver
-browser()
         stop("blocage non repéré")
       }
       lambda <- min(1, lambda.max)
       repeat { # bracktracking loop
         theta1 <- theta + lambda * p
+        if(all(theta1 == theta)) # did we really backtrack this far ?
+          break
         if(lambda == lambda.max) { # block variables
           # -> first take care of rounding errors 
           I1 <- which(lambda.i.max == lambda)
@@ -174,12 +175,13 @@ browser()
         mod <- modele_derivatives(modele.fun, theta1, obs)
         fo1 <- forward_ll(mod, TRUE)
         nb.fw <- nb.fw + 1L
+        # likelihood undefined -> backtrack
         ll1 <- if(is.na(fo1$value)) Inf else fo1$value
         gradient1 <- fo1$gradient
         gradient1[I] <- 0
         rel.ll <- abs(ll - ll1) / (abs(ll) + reltol)
         # Armijo rule
-        if(ll1 <= ll + c.armijo * lambda * p.grad | rel.ll < reltol)
+        if(ll1 <= ll + c.armijo * lambda * p.grad)
           break
         lambda <- lambda * tau_backt
         if(verbose) cat("backtracking\n")

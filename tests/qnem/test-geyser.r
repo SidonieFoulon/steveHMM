@@ -15,7 +15,7 @@ D <- data.frame(theta1 = numeric(100), theta2 = numeric(100), theta3 = numeric(1
 for(i in 1:100) {
   set.seed(i);
   cat("\n***************", i, "************* \n")
-  qn <- QNEM(runif(5), X.dich, modele.geyser, M.step.geyser, lower = rep(0,5), upper = rep(1,5))
+  qn <- QNEM(runif(5), X.dich, modele.geyser, M.step.geyser, lower = rep(0,5), upper = rep(1,5), verbose = TRUE)
   D[i,1:5] <- qn$theta
   D$neg.ll[i] <- qn$neg.ll
   D$iter[i] <- qn$iter
