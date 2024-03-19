@@ -50,7 +50,18 @@ x$inbred.coef # f = 0.078 on the whole genome, not the final value to estimate s
 x$segments # 2 HBD segments on chr 15
 bm <- x$bed.matrix
 bm <- select.snps(bm, chr == 15)
-X.HBD <- ifelse(bm@snps$N0 == 1, 1, ifelse(bm@snps$N1 == 1, 2, 3)) #we expect f ~= 0 since it is random (no consiguinity)
-theta.HBD <- c(0.05,0.05)
+X.HBD <- ifelse(bm@snps$N0 == 1, 1, ifelse(bm@snps$N1 == 1, 2, 3))
+par.HBD <- c(0.05,0.05)
+
+
+# EM
+em <- EM(par.parapluie, X.parapluie, modele.parapluie, M.step.parapluie, max.iter = 200, trace.theta = TRUE)
+
+# SQUAREM
+squarem <- SQUAREM(par.parapluie, X.parapluie, modele.parapluie, M.step.parapluie, lower = c(0,0), upper = c(1,1),max.iter =  200, trace.theta = TRUE)
+
+#quasi Newton
+quasi_newton(par.parapluie, X.parapluie, modele.parapluie, lower = c(0,0)+0.01, upper = c(1,1), trace = TRUE)
+qN <- capture_quasi_newton(par.parapluie, X.parapluie, modele.parapluie, lower = c(0,0)+0.01, upper = c(1,1), trace = TRUE)
 
 em.HBD <- EM(theta.HBD, X.HBD, modele.HBD, M.step.HBD, 10)
