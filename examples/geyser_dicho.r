@@ -22,7 +22,7 @@ modele.geyser <- function(theta, obs, name.S = c("Court", "Long", "Long stable")
   # etat stationnaire, ne dépend pas de a
   pi_c <- theta[6]
   pi_l <- theta[7]
-  pi_ls <- theta[8]
+  pi_ls <- 1- pi_c - pi_l
   pi <- c(c = pi_c, l = pi_l, ls = pi_ls)
 
   list(trans = trans, pi = pi, p.emiss = p.emiss)
@@ -68,9 +68,8 @@ M.step.geyser <- function(obs, backward) {
   #etats initiaux
   pi_c <- backward$phi[1,1]
   pi_l <- backward$phi[2,1]
-  pi_ls <- backward$phi[3,1]
 
-  c(a, b, c, d, e, pi_c, pi_l, pi_ls)
+  c(a, b, c, d, e, pi_c, pi_l)
 }
 
 M.step.geyser.stat <- function(obs, backward) {
@@ -108,21 +107,21 @@ X.dich <- ifelse(faithful$eruptions < 3, 1,2)
 
 # nos paramètres a, b et c d'initialisation :
 pi.dich <- p.stationnaire(0.31,0.46)
-par.dich <- c(a = 0.31, b = 0.46, c = 0.15, d = 0.9, e = 0.9, pi_c = pi.dich[1], pi_l = pi.dich[2], pi_ls = pi.dich[3])
+par.dich <- c(a = 0.31, b = 0.46, c = 0.15, d = 0.9, e = 0.9, pi_c = pi.dich[1], pi_l = pi.dich[2])
 
 
 # qN
-qn.dich <- quasi_newton(par.dich, X.dich, modele.geyser, lower = rep(0,8) + 0.01, upper = rep(1,8) - 0.01)
-qn.dich.trace <- capture_quasi_newton(par.dich, X.dich, modele.geyser, lower = rep(0,8) + 0.01, upper = rep(1,8) - 0.01)
+qn.dich <- quasi_newton(par.dich, X.dich, modele.geyser, lower = rep(0,7) + 0.01, upper = rep(1,7) - 0.01)
+qn.dich.trace <- capture_quasi_newton(par.dich, X.dich, modele.geyser, lower = rep(0,7) + 0.01, upper = rep(1,7) - 0.01)
 
 # EM
 em.dich <- EM(par.dich, X.dich, modele.geyser, M.step.geyser, max.iter = 1000, trace.theta = TRUE)
 
 # SQUAREM
-squarem.dich <- SQUAREM(par.dich, X.dich, modele.geyser, M.step.geyser, lower = rep(0,8), upper = rep(1,8), max.iter = 1000, trace.theta = TRUE)
+squarem.dich <- SQUAREM(par.dich, X.dich, modele.geyser, M.step.geyser, lower = rep(0,7), upper = rep(1,7), max.iter = 1000, trace.theta = TRUE)
 
 # QNEM
-qnem.dich <- QNEM(par.dich, X.dich, modele.geyser, M.step.geyser, max.iter = 1000, lower = rep(0,8), upper = rep(1,8), trace.theta = TRUE, verbose = TRUE)
+qnem.dich <- QNEM(par.dich, X.dich, modele.geyser, M.step.geyser, max.iter = 1000, lower = rep(0,7), upper = rep(1,7), trace.theta = TRUE, verbose = TRUE)
 
 #plot
 par(mfrow = c(5,1))
