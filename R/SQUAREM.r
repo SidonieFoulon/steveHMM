@@ -31,12 +31,17 @@ SQUAREM <- function(theta, obs, modele.fun, M.step.fun, lower, upper, max.iter =
 
   # 1st EM iterate need to be computed before entering the loop
   mod <- modele.fun(theta, obs) 
+  if(any(is.infinite(mod$p.emiss))) {
+    stop("Infinite density in model at starting value")
+  }
+
   fo <- forward(mod)      
   ba <- backward(fo)  
   nb.fw <- nb.fw + 1L
   nb.bw <- nb.bw + 1L
 
-  theta <- M.step.fun(obs, ba)
+  theta1 <- M.step.fun(obs, ba)
+  theta <- ifelse(is.na(theta1), theta, theta1)
   U[,2] <- theta
   # *** keep trace of theta ***
   if(trace.theta) Theta[,2] <- theta
@@ -47,12 +52,25 @@ SQUAREM <- function(theta, obs, modele.fun, M.step.fun, lower, upper, max.iter =
 
     repeat { # iterate EM until beta > 0
       mod <- modele.fun(theta, obs) 
+      if(any(is.infinite(mod$p.emiss))) {
+        warning("Infinite density in model")
+        EXIT <- TRUE
+        break
+      }
+
       fo <- forward(mod)
       ba <- backward(fo)
+      if(any(is.na(ba$phi))) {
+        warning("Backward step failed")
+        EXIT <- TRUE
+        break
+      }
+
       nb.fw <- nb.fw + 1L
       nb.bw <- nb.bw + 1L
 
-      theta <- M.step.fun(obs, ba)
+      theta1 <- M.step.fun(obs, ba)
+      theta <- ifelse(is.na(theta1), theta, theta1)
       U[,3] <- theta
       # *** keep trace of theta ***
       if(trace.theta) Theta[,k] <- theta
@@ -91,6 +109,11 @@ SQUAREM <- function(theta, obs, modele.fun, M.step.fun, lower, upper, max.iter =
         ll1 <- -Inf
       } else {
         mod <- modele.fun(theta1, obs)
+        if(any(is.infinite(mod$p.emiss))) {
+          warning("Infinite density in model")
+          EXIT <- TRUE
+          break
+        }
         fo <- forward(mod)
         nb.fw <- nb.fw + 1L
 
@@ -111,10 +134,17 @@ SQUAREM <- function(theta, obs, modele.fun, M.step.fun, lower, upper, max.iter =
 
         # take advantage that the forward has been done already to finish the E step
         ba <- backward(fo)
+        if(any(is.na(ba$phi))) {
+          warning("Backward step failed")
+          EXIT <- TRUE
+          break
+        }
+
         nb.bw <- nb.bw + 1L
 
         # M step
-        theta <- M.step.fun(obs, ba)
+        theta1 <- M.step.fun(obs, ba)
+        theta <- ifelse(is.na(theta1), theta, theta1)
         U[,2] <- theta
         # *** keep trace of theta ***
         if(trace.theta) Theta[,k] <- theta
@@ -135,7 +165,7 @@ SQUAREM <- function(theta, obs, modele.fun, M.step.fun, lower, upper, max.iter =
       beta <- beta/2
       if(beta <= 0.25) { # we bactracked too far, going back to EM
         beta <- 0
-        U[,1:2] <- U[,2:3] # shift U, readdy for going back to beginning of "big loop"
+        U[,1:2] <- U[,2:3] # shift U, ready for going back to beginning of "big loop"
         break
       }
     }
