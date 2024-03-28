@@ -3,6 +3,7 @@ if(TRUE) {
 # Vi = l'inverse d'une matrice symmétrique V 
 # I = les indices des dimensions "bloquées"
 restrict_inverse <- function(Vi, I) {
+  if(length(I) == 0) return(Vi)
   V <- MASS::ginv(Vi)
   V[I,] <- V[,I] <- 0
   R <- MASS::ginv(V)
