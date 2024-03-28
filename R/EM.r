@@ -17,13 +17,27 @@ EM <- function(theta, obs, modele.fun, M.step.fun, max.iter = 100, trace.theta =
   i <- 2
   repeat {
     mod <- modele.fun(theta, obs)
-
+    if(any(is.infinite(mod$p.emiss))) {
+      warning("Infinite density in model")
+      i <- i-1
+      break
+    }
     # Etape E
     fo <- forward(mod)
     ba <- backward(mod, fo)
 
+    if(any(is.na(ba$phi))) {
+      warning("Backward step failed")
+      i <- i-1
+      break
+    }
+
     # Etape M
     theta1 <- M.step.fun(obs, ba)
+    # when a latent state has probability 0, 
+    # some of the parameters may be undefined: keep last value
+    theta1 <- ifelse(is.na(theta1), theta, theta1)
+
     e <- sqrt( sum((theta1 - theta)**2) )
     theta <- theta1
 

@@ -33,8 +33,8 @@ SQUAREM <- function(theta, obs, modele.fun, M.step.fun, lower, upper, max.iter =
   mod <- modele.fun(theta, obs) 
   fo <- forward(mod)      
   ba <- backward(mod, fo)  
-  nb.fw <- nb.fw + 1
-  nb.bw <- nb.bw + 1
+  nb.fw <- nb.fw + 1L
+  nb.bw <- nb.bw + 1L
 
   theta <- M.step.fun(obs, ba)
   U[,2] <- theta
@@ -49,8 +49,8 @@ SQUAREM <- function(theta, obs, modele.fun, M.step.fun, lower, upper, max.iter =
       mod <- modele.fun(theta, obs) 
       fo <- forward(mod)
       ba <- backward(mod, fo)
-      nb.fw <- nb.fw + 1
-      nb.bw <- nb.bw + 1
+      nb.fw <- nb.fw + 1L
+      nb.bw <- nb.bw + 1L
 
       theta <- M.step.fun(obs, ba)
       U[,3] <- theta
@@ -92,7 +92,7 @@ SQUAREM <- function(theta, obs, modele.fun, M.step.fun, lower, upper, max.iter =
       } else {
         mod <- modele.fun(theta1, obs)
         fo <- forward(mod)
-        nb.fw <- nb.fw + 1
+        nb.fw <- nb.fw + 1L
 
         ll1 <- sum(log(colSums(fo$alpha * mod$p.emiss)))
       }
@@ -111,7 +111,7 @@ SQUAREM <- function(theta, obs, modele.fun, M.step.fun, lower, upper, max.iter =
 
         # take advantage that the forward has been done already to finish the E step
         ba <- backward(mod, fo)
-        nb.bw <- nb.bw + 1
+        nb.bw <- nb.bw + 1L
 
         # M step
         theta <- M.step.fun(obs, ba)
