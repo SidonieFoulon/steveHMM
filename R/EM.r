@@ -24,7 +24,7 @@ EM <- function(theta, obs, modele.fun, M.step.fun, max.iter = 100, trace.theta =
     }
     # Etape E
     fo <- forward(mod)
-    ba <- backward(mod, fo)
+    ba <- backward(fo)
 
     if(any(is.na(ba$phi))) {
       warning("Backward step failed")

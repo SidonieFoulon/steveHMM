@@ -56,7 +56,7 @@ QNEM <- function(theta, obs, modele.fun, M.step.fun, max.iter = 100, upper, lowe
     if(nb.em > 0 | (auto.em & !convex)) { # EM
       if(verbose) cat("EM step\n")
       # Finish the E step
-      ba <- backward(mod, fo)
+      ba <- backward(fo)
       nb.bw <- nb.bw + 1L
 
       if(any(is.na(ba$phi))) {

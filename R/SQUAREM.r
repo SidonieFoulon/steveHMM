@@ -32,7 +32,7 @@ SQUAREM <- function(theta, obs, modele.fun, M.step.fun, lower, upper, max.iter =
   # 1st EM iterate need to be computed before entering the loop
   mod <- modele.fun(theta, obs) 
   fo <- forward(mod)      
-  ba <- backward(mod, fo)  
+  ba <- backward(fo)  
   nb.fw <- nb.fw + 1L
   nb.bw <- nb.bw + 1L
 
@@ -48,7 +48,7 @@ SQUAREM <- function(theta, obs, modele.fun, M.step.fun, lower, upper, max.iter =
     repeat { # iterate EM until beta > 0
       mod <- modele.fun(theta, obs) 
       fo <- forward(mod)
-      ba <- backward(mod, fo)
+      ba <- backward(fo)
       nb.fw <- nb.fw + 1L
       nb.bw <- nb.bw + 1L
 
@@ -110,7 +110,7 @@ SQUAREM <- function(theta, obs, modele.fun, M.step.fun, lower, upper, max.iter =
         U[,1] <- theta # it's our new starting point
 
         # take advantage that the forward has been done already to finish the E step
-        ba <- backward(mod, fo)
+        ba <- backward(fo)
         nb.bw <- nb.bw + 1L
 
         # M step

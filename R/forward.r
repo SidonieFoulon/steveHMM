@@ -33,6 +33,8 @@ forward <- function(modele) {
     tmp <- p.Em[,i]*alpha[,i]
     beta[,i] <- tmp/sum(tmp)
   }
-  list(alpha = alpha, beta = beta) 
+  modele$alpha <- alpha
+  modele$beta <- beta
+  modele
 }
 

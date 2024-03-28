@@ -1,12 +1,12 @@
-backward <- function(modele, forward) {
+backward <- function(modele) {
   Tr <- modele$trans
   p.Em <- modele$p.emiss
 
   l <- ncol(p.Em)
   m <- nrow(Tr)
 
-  alpha <- forward$alpha
-  beta <- forward$beta
+  alpha <- modele$alpha
+  beta <- modele$beta
   delta <- array(NA_real_, dim = c(m, m, l), dimnames = list(rownames(Tr), rownames(Tr), NULL))
 
   phi <- matrix(NA_real_, nrow = m, ncol = l)
@@ -25,6 +25,7 @@ backward <- function(modele, forward) {
 
   delta[,,1] <- rep(0,length(delta[,,1]))
 
-  res <- list(delta = delta, phi = phi)
-  return(res)
+  modele$delta <- delta
+  modele$phi <- phi
+  modele
 }

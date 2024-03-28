@@ -76,11 +76,12 @@ forward_ll <- function(modele, keep.forward) {
     }
   }
 
-  R <- list(value = -ll, gradient = -d.ll)
+  modele$value <- -ll
+  modele$gradient <- -d.ll
   if(keep.forward) {
-    R$alpha <- ALPHA
-    R$beta <- BETA
+    modele$alpha <- ALPHA
+    modele$beta <- BETA
   }
-  R
+  modele
 }
 
