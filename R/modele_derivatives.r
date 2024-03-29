@@ -5,6 +5,9 @@ modele_derivatives <- function(modele.fun, theta, obs) {
 
   modele <- modele.fun(theta1, obs)
 
-  list(trans = value(modele$trans),  p.emiss = value(modele$p.emiss),  pi = value(modele$pi),
-      dtrans = d(modele$trans, vn), dp.emiss = d(modele$p.emiss, vn), dpi = d(modele$pi, vn) )
+  mod2 <- lapply(modele, function(x) if(is(x, "dual")) value(x) else x)
+  mod2$dtrans <- d(modele$trans, vn)
+  mod2$dp.emiss <- d(modele$p.emiss, vn)
+  mod2$dpi <- d(modele$pi, vn)
+  mod2
 }
