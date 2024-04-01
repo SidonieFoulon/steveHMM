@@ -4,7 +4,7 @@
 # modele.fun = une fonction "modèle"
 # M.step.fun = une fonction M step (input : obs, backward, output : theta)
 # it = iterations
-EM <- function(theta, obs, modele.fun, M.step.fun, max.iter = 100, trace.theta = TRUE, epsilon = 1e-5){
+EM <- function(theta, obs, modele.fun, M.step.fun, max.iter = 100, trace.theta = TRUE, epsilon = 1e-5, reltol = sqrt(.Machine$double.eps), criteria = c("reltol", "eps")){
   if(is.infinite(max.iter)) trace.theta <- FALSE
   l <- length(obs)
 
@@ -13,17 +13,27 @@ EM <- function(theta, obs, modele.fun, M.step.fun, max.iter = 100, trace.theta =
     rownames(Theta) <- names(theta)
     Theta[,1] <- theta
   }
- 
+
   i <- 2
+  mod <- modele_derivatives(modele.fun, theta, obs)
+  fo <- forward_ll(mod, TRUE)
+  ll <- fo$value
+  theta <- M.step.fun(obs, ba)
+  if(trace.theta) Theta[,i] <- theta
+
+  i <- 3
+
   repeat {
-    mod <- modele.fun(theta, obs)
+    mod <- modele_derivatives(modele.fun, theta, obs)
     if(any(is.infinite(mod$p.emiss))) {
       warning("Infinite density in model")
       i <- i-1
       break
     }
     # Etape E
-    fo <- forward(mod)
+    fo <- forward_ll(mod, keep.forward = TRUE)
+    ll1 <- fo$value
+    rel.ll <- abs(ll - ll1) / (abs(ll) + reltol)
     ba <- backward(fo)
 
     if(any(is.na(ba$phi))) {
@@ -34,7 +44,7 @@ EM <- function(theta, obs, modele.fun, M.step.fun, max.iter = 100, trace.theta =
 
     # Etape M
     theta1 <- M.step.fun(obs, ba)
-    # when a latent state has probability 0, 
+    # when a latent state has probability 0,
     # some of the parameters may be undefined: keep last value
     theta1 <- ifelse(is.na(theta1), theta, theta1)
 
@@ -42,8 +52,10 @@ EM <- function(theta, obs, modele.fun, M.step.fun, max.iter = 100, trace.theta =
     theta <- theta1
 
     if(trace.theta) Theta[,i] <- theta
-    if(e < epsilon | i == max.iter) break;
+    if(criteria == "eps") {if(e < epsilon | i == max.iter) break;}
+    if(criteria == "reltol" ) {if(rel.ll < reltol | i == max.iter) break;}
     i <- i+1
+    ll <- ll1
   }
   R <- list(theta = theta, iter = i)
   if(trace.theta) R$Theta <- Theta[, 1:i ]
