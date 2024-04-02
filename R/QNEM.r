@@ -47,8 +47,8 @@ QNEM <- function(theta, obs, modele.fun, M.step.fun, max.iter = 100, upper, lowe
   mod <- modele_derivatives(modele.fun, theta, obs)
   fo <- forward_ll(mod, TRUE)
   nb.fw <- nb.fw + 1L
-  ll <- fo$value
-  gradient <- fo$gradient
+  ll <- fo$likelihood
+  gradient <- fo$likelihood.gradient
   convex <- FALSE
 
   # the big loop
@@ -83,8 +83,8 @@ QNEM <- function(theta, obs, modele.fun, M.step.fun, max.iter = 100, upper, lowe
       fo <- forward_ll(mod, TRUE)
 
       nb.fw <- nb.fw + 1L
-      ll1 <- fo$value
-      gradient1 <- fo$gradient
+      ll1 <- fo$likelihood
+      gradient1 <- fo$likelihood.gradient
 
       # can happen near the border
       if(any(is.na(gradient1))) {
@@ -176,8 +176,8 @@ QNEM <- function(theta, obs, modele.fun, M.step.fun, max.iter = 100, upper, lowe
         fo1 <- forward_ll(mod, TRUE)
         nb.fw <- nb.fw + 1L
         # likelihood undefined -> backtrack
-        ll1 <- if(is.na(fo1$value)) Inf else fo1$value
-        gradient1 <- fo1$gradient
+        ll1 <- if(is.na(fo1$likelihood)) Inf else fo1$likelihood
+        gradient1 <- fo1$likelihood.gradient
         gradient1[I] <- 0
         rel.ll <- abs(ll - ll1) / (abs(ll) + reltol)
         # Armijo rule

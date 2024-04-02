@@ -8,8 +8,8 @@ BFGS <- function(theta, FUN, max.iter = 100, upper, lower, trace.theta = TRUE, e
   # the big loop
   repeat {
       fo <- FUN(theta)
-      ll <- fo$value
-      gradient <- fo$gradient
+      ll <- fo$likelihood
+      gradient <- fo$likelihood.gradient
       # research direction
       p <- -(H %*% gradient)
       p.grad <- sum(p * gradient)
@@ -28,7 +28,7 @@ BFGS <- function(theta, FUN, max.iter = 100, upper, lower, trace.theta = TRUE, e
           theta1[ I ] <- blocked.value[I]
         } 
         fo1 <- FUN(theta1)
-        ll1 <- if(is.na(fo1$value)) Inf else fo1$value
+        ll1 <- if(is.na(fo1$likelihood)) Inf else fo1$likelihood
         # Armijo rule [IL FAUT AUSSI VERIFIER LA CURVATURE RULE]
         if(ll1 < ll + c.armijo * lambda * p.grad)
           break
@@ -37,13 +37,13 @@ BFGS <- function(theta, FUN, max.iter = 100, upper, lower, trace.theta = TRUE, e
       # out of the backtracking loop with a "good" theta1
       # update H
       s <- theta1 - theta
-      y <- fo1$gradient - gradient
+      y <- fo1$likelihood.gradient - gradient
       if(sum(s*y) <= 0) { # curvature condition 
         stop("curvature condition does not hold*\n")
       }
       H <- H_update(H, s, y)
       theta <- theta1
-      gradient <- fo1$gradient 
+      gradient <- fo1$likelihood.gradient 
     print(H)
     print(theta)
   }

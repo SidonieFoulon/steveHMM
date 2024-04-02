@@ -76,8 +76,8 @@ forward_ll <- function(modele, keep.forward) {
     }
   }
 
-  modele$value <- -ll
-  modele$gradient <- -d.ll
+  modele$likelihood <- -ll
+  modele$likelihood.gradient <- -d.ll
   if(keep.forward) {
     modele$alpha <- ALPHA
     modele$beta <- BETA

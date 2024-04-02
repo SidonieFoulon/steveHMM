@@ -25,16 +25,21 @@ forward <- function(modele) {
   alpha[,1] <- pi
 
   tmp <- p.Em[,1]*alpha[,1]
-  beta[,1] <- tmp/sum(tmp)
+  stmp <- sum(tmp)
+  beta[,1] <- tmp/stmp
+  ll <- log(stmp)
   
   for(i in 2:l){ 
     alpha[,i] <- beta[,i-1] %*% Tr
     
     tmp <- p.Em[,i]*alpha[,i]
-    beta[,i] <- tmp/sum(tmp)
+    stmp <- sum(tmp)
+    beta[,i] <- tmp/stmp
+    ll <- log(stmp)
   }
   modele$alpha <- alpha
   modele$beta <- beta
+  modele$likelihood <- ll
   modele
 }
 

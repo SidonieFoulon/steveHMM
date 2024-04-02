@@ -6,6 +6,9 @@
 # it = iterations
 EM <- function(theta, obs, modele.fun, M.step.fun, max.iter = 100, trace.theta = TRUE, epsilon = 1e-5, reltol = sqrt(.Machine$double.eps), criteria = c("reltol", "eps")){
   if(is.infinite(max.iter)) trace.theta <- FALSE
+  max.iter <- max(as.integer(max.iter), 3)
+  criteria <- match.arg(criteria)
+
   l <- length(obs)
 
   if(trace.theta) {
@@ -16,8 +19,9 @@ EM <- function(theta, obs, modele.fun, M.step.fun, max.iter = 100, trace.theta =
 
   i <- 2
   mod <- modele_derivatives(modele.fun, theta, obs)
-  fo <- forward_ll(mod, TRUE)
-  ll <- fo$value
+  fo <- forward(mod)
+  ll <- fo$likelihood
+  ba <- backward(fo)
   theta <- M.step.fun(obs, ba)
   if(trace.theta) Theta[,i] <- theta
 
@@ -32,7 +36,7 @@ EM <- function(theta, obs, modele.fun, M.step.fun, max.iter = 100, trace.theta =
     }
     # Etape E
     fo <- forward_ll(mod, keep.forward = TRUE)
-    ll1 <- fo$value
+    ll1 <- fo$likelihood
     rel.ll <- abs(ll - ll1) / (abs(ll) + reltol)
     ba <- backward(fo)
 
@@ -50,12 +54,12 @@ EM <- function(theta, obs, modele.fun, M.step.fun, max.iter = 100, trace.theta =
 
     e <- sqrt( sum((theta1 - theta)**2) )
     theta <- theta1
+    ll <- ll1
 
     if(trace.theta) Theta[,i] <- theta
     if(criteria == "eps") {if(e < epsilon | i == max.iter) break;}
     if(criteria == "reltol" ) {if(rel.ll < reltol | i == max.iter) break;}
     i <- i+1
-    ll <- ll1
   }
   R <- list(theta = theta, iter = i)
   if(trace.theta) R$Theta <- Theta[, 1:i ]
