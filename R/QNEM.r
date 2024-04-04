@@ -17,9 +17,9 @@ QNEM <- function(theta, obs, modele.fun, M.step.fun, max.iter = 100, upper, lowe
 
   d <- length(theta)
   if(missing(lower)) lower <- rep(-Inf, d)
-  if(missing(upper)) upper <- rep(-Inf, d)
+  if(missing(upper)) upper <- rep(Inf, d)
   if(any(theta < lower | theta > upper)) stop("Initial value not in the bounding box")
-  
+
   if(is.infinite(max.iter)) trace.theta <- FALSE
   if(trace.theta) {
     Theta <- matrix(NA_real_, ncol = max.iter, nrow = d)
@@ -52,7 +52,7 @@ QNEM <- function(theta, obs, modele.fun, M.step.fun, max.iter = 100, upper, lowe
   convex <- FALSE
 
   # the big loop
-  repeat { 
+  repeat {
     if(nb.em > 0 | (auto.em & !convex)) { # EM
       if(verbose) cat("EM step\n")
       # Finish the E step
@@ -74,7 +74,7 @@ QNEM <- function(theta, obs, modele.fun, M.step.fun, max.iter = 100, upper, lowe
 
       # in some cases, the M step produces NA's (e.g. conditionnal probabilities computed as 0/0)
       # this should be a correct way to deal with this
-      # when a latent state has probability 0, 
+      # when a latent state has probability 0,
       # some of the parameters may be undefined: keep last value
       theta1 <- ifelse(is.na(theta1), theta, theta1)
 
@@ -95,7 +95,7 @@ QNEM <- function(theta, obs, modele.fun, M.step.fun, max.iter = 100, upper, lowe
         # this will interrupt the loop
         ll1 <- ll
       }
-      # record changes     
+      # record changes
       s <- theta1 - theta
       y <- gradient1 - gradient
       rel.ll <- abs(ll - ll1) / (abs(ll) + reltol)
@@ -109,7 +109,7 @@ QNEM <- function(theta, obs, modele.fun, M.step.fun, max.iter = 100, upper, lowe
 
       # update current point
       theta <- theta1
-      gradient  <- gradient1    
+      gradient  <- gradient1
       ll <- ll1
 
       # prêt...
@@ -128,7 +128,7 @@ QNEM <- function(theta, obs, modele.fun, M.step.fun, max.iter = 100, upper, lowe
         # on commence par s'assurer qu'il n'y a pas de débordement
         theta <- ifelse(over, upper, theta)
         theta <- ifelse(under, lower, theta)
-        # on met à jour la liste des variables bloquées 
+        # on met à jour la liste des variables bloquées
         # [on regarde le gradient pour voir si c'est un vrai blocage]
         I1 <- which((over & gradient <= 0) | (under & gradient >= 0))
         I <- union(I, I1)
@@ -156,7 +156,7 @@ QNEM <- function(theta, obs, modele.fun, M.step.fun, max.iter = 100, upper, lowe
       }
       # preparing for backtracking
       lambda.i.max <- ifelse(p > 0, (upper - theta)/p, ifelse(p < 0, (lower - theta)/p, Inf))
-      
+
       blocked.value <- ifelse(p >=0, upper, lower)
       lambda.max <- min(lambda.i.max[J], na.rm = TRUE)  # [J] : only unblocked vars
       if(lambda.max <= 0) { # ne devrait pas arriver
@@ -168,7 +168,7 @@ QNEM <- function(theta, obs, modele.fun, M.step.fun, max.iter = 100, upper, lowe
         if(all(theta1 == theta)) # did we really backtrack this far ?
           break
         if(lambda == lambda.max) { # block variables
-          # -> first take care of rounding errors 
+          # -> first take care of rounding errors
           I1 <- which(lambda.i.max == lambda)
           theta1[I1] <- blocked.value[I1]
         }
@@ -197,7 +197,7 @@ QNEM <- function(theta, obs, modele.fun, M.step.fun, max.iter = 100, upper, lowe
       } else {
         H <- H_update(H, s, y)
         # ------ if new wariables are blocked -----
-        if(lambda == lambda.max) { 
+        if(lambda == lambda.max) {
           I <- union(I, I1)
           J <- setdiff(J, I1)
           if(verbose) cat("Blocking variables", I, "\n")
@@ -213,12 +213,12 @@ QNEM <- function(theta, obs, modele.fun, M.step.fun, max.iter = 100, upper, lowe
       QN <- TRUE
     }
     if(trace.theta) Theta[,i] <- theta
-    if((QN & auto.em & !convex) | (QN & nb.em > 0)) { # in QN, decided to force at least one EM step 
+    if((QN & auto.em & !convex) | (QN & nb.em > 0)) { # in QN, decided to force at least one EM step
       I <- integer(0)
       J <- seq_along(theta)
       H <- matrix(NA_real_, d, d)
     } else {
-      if(rel.ll < reltol | i == max.iter) break 
+      if(rel.ll < reltol | i == max.iter) break
     }
     i <- i+1
     if(verbose) cat("theta =", as.vector(theta), "\n")

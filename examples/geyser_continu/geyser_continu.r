@@ -97,7 +97,7 @@ modele.geyser.continu <- function(theta = c(a = 0.31, b = 0.46, muc = 1.98, mul 
   pi_c <- theta[9]
   pi_l <- theta[10]
   pi_ls <- 1 - pi_c - pi_l
-  pi <- c( c = (1-b), l = (1-a)*(1-b), ls = a ) / (2 - 2*b + a*b)
+  pi <- c( c = pi_c, l = pi_l, ls = pi_ls )
 
   list(trans = trans, pi = pi, p.emiss = p.emiss)
 }
@@ -153,29 +153,20 @@ library(MASS)
 X.geyser <- faithful$eruptions
 
 # nos paramètres a et b et paramètres des lois normales d'initialisation :
-par.geyser <- c(a = 0.31, b = 0.46, muc = 1.98, mul = 4.26, muls = 4.26, sdc = 0.28, sdl = 0.39, sdls = 0.39)
+par.geyser <- c(a = 0.31, b = 0.46, muc = 1.98, mul = 4.26, muls = 4.26, sdc = 0.28, sdl = 0.39, sdls = 0.39, pi_c = 0.44, pi_l = 0.30)
 
-
-# maximisation directe avec calcul du forward en probabilites conditionnelles
-f <-function(theta) neg_log_likelihood(theta, X.geyser, modele.geyser.continu)
-optim( par.geyser, f, method = "L-B", lower = c(0,0), upper = c(1,1) )
-trace <- captureTheta(par.geyser, f)
-traceCauchy <- captureThetaCauchy(par.geyser, f)
-fulltrace <- capture_optim( par.geyser, f, method = "L-B", lower = c(0,0)+0.01, upper = c(1,1))
+# qN
+qn.cont <- quasi_newton(par.geyser, X.geyser, modele.geyser.continu, lower = c(.01,.01, rep(0, 6), .01, .01), upper = c(.99,.99, rep(Inf, 6), .99,.99))
+qn.cont.trace <- capture_quasi_newton(par.geyser, X.geyser, modele.geyser.continu, lower = c(.01,.01, rep(0, 6), .01, .01), upper = c(.99,.99, rep(Inf, 6), .99,.99))
 
 # EM
-em <- EM(par.geyser, X.geyser, modele.geyser.continu, M.step.geyser.continu, max.iter = Inf)
+em.cont <- EM(par.geyser, X.geyser, modele.geyser.continu, M.step.geyser.continu, trace.theta = TRUE)
 
 # SQUAREM
-squarem <- SQUAREM(par.geyser, X.geyser, modele.geyser, M.step.geyser, lower = c(0,0), upper = c(1,1), 200)
+squarem.cont <- SQUAREM(par.geyser, X.geyser, modele.geyser.continu, M.step.geyser.continu, trace.theta = TRUE)
 
-# quasi newton avec dérivées
-quasi_newton(par.geyser, X.geyser, modele.geyser.continu, lower = rep(0,5)+1e5, upper = c(1,1, rep(Inf,3)), trace = TRUE)
-qN <- capture_quasi_newton(par.geyser, X.geyser, modele.geyser.continu, lower = rep(0,5)+1e5, upper = c(1,1, rep(Inf,3)), trace = TRUE)
-for(i in 1:ncol(qN)) {
-  if( sqrt(sum((qN[,i] - qN[,i-1])^2)) < 1e-5) print(i)
-}
-qN <- qN[, 1:22] #à ajuster
+# QNEM
+qnem.cont <- QNEM(par.geyser, X.geyser, modele.geyser.continu, M.step.geyser.continu,trace.theta = TRUE, verbose = TRUE)
 
 
 
