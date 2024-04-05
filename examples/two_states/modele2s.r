@@ -19,10 +19,10 @@ M.step.2s <- function(obs, backward) {
   D12 <- sum(backward$delta[1,2,]) + backward$phi[2,1]
   D21 <- sum(backward$delta[2,1,]) + backward$phi[1,1]
   D22 <- sum(backward$delta[2,2,])
-  a <- backward$theta[1]
-  b <- backward$theta[2]
-  a <- (D12 - a*(1-a)/(a+b)) / (D11 + D12)
-  b <- (D21 - b*(1-b)/(a+b)) / (D21 + D22)
+  a0 <- backward$theta[1]
+  b0 <- backward$theta[2]
+  a <- (D12 - a0*(1-a0)/(a0+b0)) / (D11 + D12)
+  b <- (D21 - b0*(1-b0)/(a0+b0)) / (D21 + D22)
 
   e <- (sum(backward$phi[2,which(obs == 1)]) + sum(backward$phi[1,which(obs == 2)])) / ncol(backward$phi)
   c(a, b, e)
