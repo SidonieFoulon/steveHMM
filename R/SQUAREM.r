@@ -5,13 +5,13 @@
 # upper, lower = comme dans optim
 # max.iter = max iterations
 # epsilon = critere de convergence
-SQUAREM <- function(theta, obs, modele.fun, M.step.fun, lower, upper, max.iter = 100, trace.theta = TRUE, epsilon = 1e-5) {
+SQUAREM <- function(theta, obs, modele.fun, M.step.fun, lower, upper, max.iter = 100, trace.theta = TRUE, epsilon = 1e-5, reltol = sqrt(.Machine$double.eps), criteria = c("reltol", "eps")) {
   if(is.infinite(max.iter)) trace.theta <- FALSE
 
   l <- length(obs)
   if(missing(lower)) lower <- rep(-Inf, length(theta))
   if(missing(upper)) upper <- rep(+Inf, length(theta))
-  if( any(theta < lower) | any(theta > upper) ) 
+  if( any(theta < lower) | any(theta > upper) )
     stop("Bad starting point")
 
   # to keep all iterates
@@ -30,13 +30,14 @@ SQUAREM <- function(theta, obs, modele.fun, M.step.fun, lower, upper, max.iter =
   U[,1] <- theta
 
   # 1st EM iterate need to be computed before entering the loop
-  mod <- modele.fun(theta, obs) 
+  mod <- modele_derivatives(modele.fun,theta, obs)
   if(any(is.infinite(mod$p.emiss))) {
     stop("Infinite density in model at starting value")
   }
 
-  fo <- forward(mod)      
-  ba <- backward(fo)  
+  fo <- forward(mod)
+  ll <- fo$likelihood
+  ba <- backward(fo)
   nb.fw <- nb.fw + 1L
   nb.bw <- nb.bw + 1L
 
@@ -46,12 +47,12 @@ SQUAREM <- function(theta, obs, modele.fun, M.step.fun, lower, upper, max.iter =
   # *** keep trace of theta ***
   if(trace.theta) Theta[,2] <- theta
   k <- 3
- 
-  EXIT <- FALSE 
+
+  EXIT <- FALSE
   repeat { # The big loop
 
     repeat { # iterate EM until beta > 0
-      mod <- modele.fun(theta, obs) 
+      mod <- modele_derivatives(modele.fun, theta, obs)
       if(any(is.infinite(mod$p.emiss))) {
         warning("Infinite density in model")
         EXIT <- TRUE
@@ -59,6 +60,8 @@ SQUAREM <- function(theta, obs, modele.fun, M.step.fun, lower, upper, max.iter =
       }
 
       fo <- forward(mod)
+      ll1 <- fo$likelihood
+      rel.ll <- abs(ll - ll1) / (abs(ll) + reltol)
       ba <- backward(fo)
       if(any(is.na(ba$phi))) {
         warning("Backward step failed")
@@ -75,15 +78,24 @@ SQUAREM <- function(theta, obs, modele.fun, M.step.fun, lower, upper, max.iter =
       # *** keep trace of theta ***
       if(trace.theta) Theta[,k] <- theta
       k <- k+1;
+      ll <- ll1
       if(k > max.iter) {
         EXIT <- TRUE
         break
       }
 
       # check convergence
-      if( sqrt(sum((U[,2] - U[,3])**2)) < epsilon ) {
-        EXIT <- TRUE
-        break
+      if(criteria == "eps") {
+        if( sqrt(sum((U[,2] - U[,3])**2)) < epsilon ) {
+          EXIT <- TRUE
+          break
+        }
+      }
+      if(criteria == "reltol" ) {
+        if(rel.ll < reltol){
+          EXIT <- TRUE
+          break
+        }
       }
 
       beta <- squarem.beta(U)
@@ -102,13 +114,13 @@ SQUAREM <- function(theta, obs, modele.fun, M.step.fun, lower, upper, max.iter =
     # now for the potential new theta, until it's higher than ll0
     repeat { # backtracking loop
       theta1 <- squarem.proposal(U, beta)
-      # checking box bounds 
+      # checking box bounds
       if( any(theta1 < lower) | any(theta1 > upper) ) {
         # a good idea could be to go on the box boundary
         # but for now backtracking is ok
-        ll1 <- -Inf
+        ll01 <- -Inf
       } else {
-        mod <- modele.fun(theta1, obs)
+        mod <- modele_derivatives(modele.fun, theta1, obs)
         if(any(is.infinite(mod$p.emiss))) {
           warning("Infinite density in model")
           EXIT <- TRUE
@@ -117,9 +129,10 @@ SQUAREM <- function(theta, obs, modele.fun, M.step.fun, lower, upper, max.iter =
         fo <- forward(mod)
         nb.fw <- nb.fw + 1L
 
-        ll1 <- sum(log(colSums(fo$alpha * mod$p.emiss)))
+        ll01 <- sum(log(colSums(fo$alpha * mod$p.emiss)))
+        rel.ll0 <- abs(ll0 - ll01) / (abs(ll0) + reltol)
       }
-      if(ll1 >= ll0) { # accept proposal
+      if(ll01 >= ll0) { # accept proposal
         theta <- theta1
 
         # *** keep trace of theta ***
@@ -155,8 +168,15 @@ SQUAREM <- function(theta, obs, modele.fun, M.step.fun, lower, upper, max.iter =
         }
 
         # check convergence
-        if( sqrt(sum((U[,1] - U[,2])**2)) < epsilon ) {
-          EXIT <- TRUE
+        if(criteria == "eps") {
+          if( sqrt(sum((U[,1] - U[,2])**2)) < epsilon ) {
+            EXIT <- TRUE
+          }
+        }
+        if(criteria == "reltol" ) {
+          if(rel.ll0 < reltol){
+            EXIT <- TRUE
+          }
         }
 
         break # break from the backtracking loop, ready to compute U[,3]
@@ -169,6 +189,7 @@ SQUAREM <- function(theta, obs, modele.fun, M.step.fun, lower, upper, max.iter =
         break
       }
     }
+    ll <- ll01
     if(EXIT) break
   }
   # EXIT is true !
@@ -179,7 +200,7 @@ SQUAREM <- function(theta, obs, modele.fun, M.step.fun, lower, upper, max.iter =
 
 
 squarem.beta <- function(U) {
-  r <- U[,2] - U[,1] 
+  r <- U[,2] - U[,1]
   v <- U[,3] - 2*U[,2] +  U[,1]
   beta <- sqrt(sum(r**2)) / sqrt(sum(v**2)) - 1
   # cat("beta = ", beta, "\n")
