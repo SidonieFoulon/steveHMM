@@ -7,6 +7,7 @@
 # epsilon = critere de convergence
 SQUAREM <- function(theta, obs, modele.fun, M.step.fun, lower, upper, max.iter = 100, trace.theta = TRUE, epsilon = 1e-5, reltol = sqrt(.Machine$double.eps), criteria = c("reltol", "eps")) {
   if(is.infinite(max.iter)) trace.theta <- FALSE
+  criteria <- match.arg(criteria)
 
   l <- length(obs)
   if(missing(lower)) lower <- rep(-Inf, length(theta))
@@ -30,7 +31,7 @@ SQUAREM <- function(theta, obs, modele.fun, M.step.fun, lower, upper, max.iter =
   U[,1] <- theta
 
   # 1st EM iterate need to be computed before entering the loop
-  mod <- modele_derivatives(modele.fun,theta, obs)
+  mod <- modele.fun(theta, obs)
   if(any(is.infinite(mod$p.emiss))) {
     stop("Infinite density in model at starting value")
   }
@@ -52,7 +53,7 @@ SQUAREM <- function(theta, obs, modele.fun, M.step.fun, lower, upper, max.iter =
   repeat { # The big loop
 
     repeat { # iterate EM until beta > 0
-      mod <- modele_derivatives(modele.fun, theta, obs)
+      mod <- modele.fur(theta, obs)
       if(any(is.infinite(mod$p.emiss))) {
         warning("Infinite density in model")
         EXIT <- TRUE
@@ -90,8 +91,7 @@ SQUAREM <- function(theta, obs, modele.fun, M.step.fun, lower, upper, max.iter =
           EXIT <- TRUE
           break
         }
-      }
-      if(criteria == "reltol" ) {
+      } else {
         if(rel.ll < reltol){
           EXIT <- TRUE
           break
@@ -120,7 +120,7 @@ SQUAREM <- function(theta, obs, modele.fun, M.step.fun, lower, upper, max.iter =
         # but for now backtracking is ok
         ll01 <- -Inf
       } else {
-        mod <- modele_derivatives(modele.fun, theta1, obs)
+        mod <- modele.fun(theta1, obs)
         if(any(is.infinite(mod$p.emiss))) {
           warning("Infinite density in model")
           EXIT <- TRUE

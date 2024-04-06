@@ -57,8 +57,11 @@ EM <- function(theta, obs, modele.fun, M.step.fun, max.iter = 100, trace.theta =
     ll <- ll1
 
     if(trace.theta) Theta[,i] <- theta
-    if(criteria == "eps") {if(e < epsilon | i == max.iter) break;}
-    if(criteria == "reltol" ) {if(rel.ll < reltol | i == max.iter) break;}
+    if(criteria == "eps") { 
+      if(e < epsilon | i == max.iter) break; 
+    } else {
+      if(rel.ll < reltol | i == max.iter) break;
+    }
     i <- i+1
   }
   R <- list(theta = theta, iter = i)
