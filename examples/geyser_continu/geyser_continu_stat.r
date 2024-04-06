@@ -41,12 +41,12 @@ M.step.geyser.continu.stat <- function(obs, backward) {
   D33 <- sum(backward$delta[3,3,-1]) 
  
   if(D12 + D13 > 0) 
-    a <- (D13 - a0*(1-a0)/(2 - 2*b0 + a0*b0)) / (D12 + D13)
+    a <- (D13 - a0*(1-a0)*b0/(2 - 2*b0 + a0*b0)) / (D12 + D13)
   else 
     a <- 1 # pas d'état court
 
   if(D31 + D33 > 0) 
-    b <- (D33 - b0*(1-b0)/(2 - 2*b0 + a0*b0)) / (D31 + D33)
+    b <- (D33 - b0*(1-b0)*(a0-2)/(2 - 2*b0 + a0*b0)) / (D31 + D33)
   else 
     b <- 0 # pas d'état "long stable"
 
@@ -68,7 +68,7 @@ M.step.geyser.continu.stat <- function(obs, backward) {
   varls <- (sum(backward$phi[3,] * (obs**2)) / sum(backward$phi[3,])) - (muls**2)
   sdls <- sqrt(ifelse(varls > 0, varls, 0))
 
-  r <- c(a = a, b = b, muc = muc, mul = mul, muls = muls, sdc = sdc, sdl = sdl, sdls = sdls)
+  r <- c(a = as.numeric(a), b = as.numeric(b), muc = muc, mul = mul, muls = muls, sdc = sdc, sdl = sdl, sdls = sdls)
   r
 }
 

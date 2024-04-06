@@ -18,7 +18,7 @@ EM <- function(theta, obs, modele.fun, M.step.fun, max.iter = 100, trace.theta =
   }
 
   i <- 2
-  mod <- modele_derivatives(modele.fun, theta, obs)
+  mod <- modele.fun(theta, obs)
   fo <- forward(mod)
   ll <- fo$likelihood
   ba <- backward(fo)
@@ -28,14 +28,14 @@ EM <- function(theta, obs, modele.fun, M.step.fun, max.iter = 100, trace.theta =
   i <- 3
 
   repeat {
-    mod <- modele_derivatives(modele.fun, theta, obs)
+    mod <- modele.fun(theta, obs)
     if(any(is.infinite(mod$p.emiss))) {
       warning("Infinite density in model")
       i <- i-1
       break
     }
     # Etape E
-    fo <- forward_ll(mod, keep.forward = TRUE)
+    fo <- forward(mod)
     ll1 <- fo$likelihood
     rel.ll <- abs(ll - ll1) / (abs(ll) + reltol)
     ba <- backward(fo)
