@@ -53,7 +53,7 @@ SQUAREM <- function(theta, obs, modele.fun, M.step.fun, lower, upper, max.iter =
   repeat { # The big loop
 
     repeat { # iterate EM until beta > 0
-      mod <- modele.fur(theta, obs)
+      mod <- modele.fun(theta, obs)
       if(any(is.infinite(mod$p.emiss))) {
         warning("Infinite density in model")
         EXIT <- TRUE
