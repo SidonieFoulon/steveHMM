@@ -10,10 +10,13 @@ SQUAREM <- function(theta, obs, modele.fun, M.step.fun, lower, upper, max.iter =
   criteria <- match.arg(criteria)
 
   l <- length(obs)
-  if(missing(lower)) lower <- rep(-Inf, length(theta))
-  if(missing(upper)) upper <- rep(+Inf, length(theta))
-  if( any(theta < lower) | any(theta > upper) )
-    stop("Bad starting point")
+
+  d <- length(theta)
+  if(missing(lower)) lower <- rep(-Inf, d)
+  if(missing(upper)) upper <- rep(Inf, d)
+  if(length(upper) != d) stop("upper and theta should have same length")
+  if(length(lower) != d) stop("lower and theta should have same length")
+  if(any(theta < lower | theta > upper)) stop("Initial value not in the bounding box")
 
   # to keep all iterates
   if(trace.theta) {
