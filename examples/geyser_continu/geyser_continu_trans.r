@@ -37,21 +37,21 @@ M.step.geyser.continu <- function(obs, backward) {
   l <- ncol(backward$phi)
 
   #a = proba de changement d'état de "Court" à "Long stable" (->trans)
-  p.court <- sum(backward$phi[1,-l])
+  D13 <- sum(backward$delta[1,3,-1])
+  p.court <- sum(backward$phi[1,-l]) # = D12 + D13
   if(p.court > 0)
-    a <- sum(backward$delta[1,3,-1]) / p.court
-  else {
-    a <- 1
-  }
+    a <- D13 / p.court
+  else
+    a <- 1 # pas d'état court
 
   #b = proba de passage d'état de "Long stable" à "Long stable" (->trans)
-  p.long.st <- sum(backward$phi[3,-l])
+  D33 <- sum(backward$delta[3,3,-1]) 
+  p.long.st <- sum(backward$phi[3,-l]) # = D31 + D33
   if(p.long.st > 0)
-    b <- sum(backward$delta[3,3,-1]) / p.long.st
-  else {
-    b <- 0
-  }
-
+    b <- D33 / p.long.st
+  else 
+    b <- 0 # pas d'état "long stable"
+  
   #esperance de la loi normale pour les etats "court" et "Long", la proba pour l'état "Long stable" en découlera (->emiss)
   muc <- sum(backward$phi[1,] * obs) / sum(backward$phi[1,])
 

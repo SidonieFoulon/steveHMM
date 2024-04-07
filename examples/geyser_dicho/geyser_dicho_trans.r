@@ -19,7 +19,7 @@ modele.geyser <- function(theta, obs, name.S = c("Court", "Long", "Long stable")
   p.emiss <- rbind(ifelse(obs == 1, 1-c, c), ifelse(obs == 1, 1-d, d), ifelse(obs == 1, 1-e, e))
   rownames(p.emiss) <- name.S
 
-  # etat stationnaire, ne dépend pas de a
+  # proba   
   pi_c <- theta[6]
   pi_l <- theta[7]
   pi_ls <- 1- pi_c - pi_l
@@ -28,33 +28,24 @@ modele.geyser <- function(theta, obs, name.S = c("Court", "Long", "Long stable")
   list(trans = trans, pi = pi, p.emiss = p.emiss)
 }
 
-modele.geyser.stat <- function(theta, obs, name.S = c("Court", "Long", "Long stable")) {
-  # parametre de la matrice de transition
-  a <- theta[1]
-  b <- theta[2]
-  trans <- matrix(c(0,1-a,a,1,0,0,1-b,0,b), nrow = 3, byrow = TRUE)
-  colnames(trans) <- rownames(trans) <- name.S
-
-  # parametre de l'émission
-  c <- theta[3]
-  d <- theta[4]
-  e <- theta[5]
-  p.emiss <- rbind(ifelse(obs == 1, 1-c, c), ifelse(obs == 1, 1-d, d), ifelse(obs == 1, 1-e, e))
-  rownames(p.emiss) <- name.S
-
-  # etat stationnaire, ne dépend pas de a
-  pi <- p.stationnaire(a,b)
-
-  list(trans = trans, pi = pi, p.emiss = p.emiss)
-}
-
 M.step.geyser <- function(obs, backward) {
   l <- ncol(backward$phi)
-  #a = proba de changement d'état de "Court" à "Long stable" (->trans)
-  a <- sum(backward$delta[1,3,-1]) / sum(backward$phi[1,-l])
 
+  #a = proba de changement d'état de "Court" à "Long stable" (->trans)
+  D13 <- sum(backward$delta[1,3,-1])
+  p.court <- sum(backward$phi[1,-l]) # = D12 + D13
+  if(p.court > 0)
+    a <- D13 / p.court
+  else 
+    a <- 1 # pas d'état court
+  
   #b = proba de passage d'état de "Long stable" à "Long stable" (->trans)
-  b <- sum(backward$delta[3,3,-1]) / sum(backward$phi[3,-l])
+  D33 <- sum(backward$delta[3,3,-1])
+  p.long.st <- sum(backward$phi[3,-l]) # = D31 + D33
+  if(p.long.st > 0)
+    b <- D33 / p.long.st
+  else 
+    b <- 0 # pas d'état "long stable"
 
   #c = proba de durée >= 3min chez les "Courts" (->emiss)
   c <- sum(backward$phi[1,which(obs==2)]) / sum(backward$phi[1,])
@@ -72,43 +63,15 @@ M.step.geyser <- function(obs, backward) {
   c(a, b, c, d, e, pi_c, pi_l)
 }
 
-M.step.geyser.stat <- function(obs, backward) {
-  l <- ncol(backward$phi)
-  #a = proba de changement d'état de "Court" à "Long stable" (->trans)
-  a <- sum(backward$delta[1,3,-1]) / sum(backward$phi[1,-l])
-
-  #b = proba de passage d'état de "Long stable" à "Long stable" (->trans)
-  b <- sum(backward$delta[3,3,-1]) / sum(backward$phi[3,-l])
-
-  #c = proba de durée >= 3min chez les "Courts" (->emiss)
-  c <- sum(backward$phi[1,which(obs==2)]) / sum(backward$phi[1,])
-
-  #d = proba de durée >= 3min chez les "Longs" (->emiss)
-  d <- sum(backward$phi[2,which(obs==2)]) / sum(backward$phi[2,])
-
-  #e = proba de durée >= 3min chez les "Longs stables" (->emiss)
-  e <- sum(backward$phi[3,which(obs==2)]) / sum(backward$phi[3,])
-
-  c(a, b, c, d, e)
-}
-
-
-if(FALSE) {
-# Exemple d'utilisation :
-#source("forward.r")
-#source("backward.r")
-#source("EM.r")
-
-## Version dichotomisée
-
 # nos observations dichotomisées :
-library(MASS)
 X.dich <- ifelse(faithful$eruptions < 3, 1,2)
 
 # nos paramètres a, b et c d'initialisation :
 pi.dich <- p.stationnaire(0.31,0.46)
 par.dich <- c(a = 0.31, b = 0.46, c = 0.15, d = 0.9, e = 0.9, pi_c = pi.dich[1], pi_l = pi.dich[2])
 
+if(FALSE) {
+library(steveHMM)
 
 # qN
 qn.dich <- quasi_newton(par.dich, X.dich, modele.geyser, lower = rep(0,7) + 0.01, upper = rep(1,7) - 0.01)
