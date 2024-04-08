@@ -35,17 +35,21 @@ M.step.geyser.stat <- function(obs, backward) {
   D31 <- sum(backward$delta[3,1,-1]) + backward$phi[1,1] + backward$phi[2,1]
   D33 <- sum(backward$delta[3,3,-1])
 
-  #a = proba de changement d'état de "Court" à "Long stable" (->trans)
-  if(D12 + D13 > 0)
-    a <- (D13 - a0*(1-a0)*b0/(2 - 2*b0 + a0*b0)) / (D12 + D13)
-  else
-    a <- 1 # pas d'état court
+  repeat {
+    if(D12 + D13 > 0)
+      a <- (D13 - a0*(1-a0)*b0/(2 - 2*b0 + a0*b0)) / (D12 + D13)
+    else
+      a <- 1 # pas d'état court
 
-  #b = proba de passage d'état de "Long stable" à "Long stable" (->trans)
-  if(D31 + D33 > 0)
-    b <- (D33 - b0*(1-b0)*(a0-2)/(2 - 2*b0 + a0*b0)) / (D31 + D33)
-  else
-    b <- 0 # pas d'état "long stable"
+    if(D31 + D33 > 0)
+      b <- (D33 - b0*(1-b0)*(a0-2)/(2 - 2*b0 + a0*b0)) / (D31 + D33)
+    else
+      b <- 0 # pas d'état "long stable"
+
+    if(a >= 0 & a <= 1 & b >= 0 & b <= 1) break
+    a0 <- a
+    b0 <- b
+  }
 
   #c = proba de durée >= 3min chez les "Courts" (->emiss)
   c <- sum(backward$phi[1,which(obs==2)]) / sum(backward$phi[1,])

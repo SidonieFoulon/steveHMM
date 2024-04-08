@@ -2,7 +2,7 @@ capture_quasi_newton <- function(...) {
 
   L <- list(...)
   L <- c(L, list(control = list(trace = 6)))
-  trace <- capture.output( do.call(quasi_newton, L) )
+  trace <- capture.output(try(do.call(quasi_newton, L)))
 
   tr1 <- trace[grep( "^(Cauchy X|theta) =", trace ) ]
   pts <- sapply(tr1, getval, USE.NAMES = FALSE)

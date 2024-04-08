@@ -40,16 +40,21 @@ M.step.geyser.continu.stat <- function(obs, backward) {
   D31 <- sum(backward$delta[3,1,-1]) + backward$phi[1,1] + backward$phi[2,1]
   D33 <- sum(backward$delta[3,3,-1]) 
  
-  if(D12 + D13 > 0) 
-    a <- (D13 - a0*(1-a0)*b0/(2 - 2*b0 + a0*b0)) / (D12 + D13)
-  else 
-    a <- 1 # pas d'état court
+  repeat {
+    if(D12 + D13 > 0)
+      a <- (D13 - a0*(1-a0)*b0/(2 - 2*b0 + a0*b0)) / (D12 + D13)
+    else
+      a <- 1 # pas d'état court
 
-  if(D31 + D33 > 0) 
-    b <- (D33 - b0*(1-b0)*(a0-2)/(2 - 2*b0 + a0*b0)) / (D31 + D33)
-  else 
-    b <- 0 # pas d'état "long stable"
+    if(D31 + D33 > 0)
+      b <- (D33 - b0*(1-b0)*(a0-2)/(2 - 2*b0 + a0*b0)) / (D31 + D33)
+    else
+      b <- 0 # pas d'état "long stable"
 
+    if(a >= 0 & a <= 1 & b >= 0 & b <= 1) break
+    a0 <- a
+    b0 <- b
+  }
 
   #esperance de la loi normale pour les etats "court" et "Long", la proba pour l'état "Long stable" en découlera (->emiss)
   muc <- sum(backward$phi[1,] * obs) / sum(backward$phi[1,])
