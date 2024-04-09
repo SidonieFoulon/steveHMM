@@ -196,7 +196,7 @@ SQUAREM <- function(theta, obs, modele.fun, M.step.fun, lower, upper, max.iter =
     if(EXIT) break
   }
   # EXIT is true !
-  R <- list(theta = theta, iter = k-1, forwards = nb.fw, backwards = nb.bw)
+  R <- list(theta = theta, iter = k-1, forwards = nb.fw, backwards = nb.bw, likelihood = ll)
   if(trace.theta) R$Theta <- Theta[, 1:(k-1) ]
   R
 }

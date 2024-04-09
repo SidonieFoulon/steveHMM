@@ -64,7 +64,7 @@ EM <- function(theta, obs, modele.fun, M.step.fun, max.iter = 100, trace.theta =
     }
     i <- i+1
   }
-  R <- list(theta = theta, iter = i)
+  R <- list(theta = theta, iter = i, likelihood = ll)
   if(trace.theta) R$Theta <- Theta[, 1:i ]
   R
 }
