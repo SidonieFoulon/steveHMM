@@ -1,23 +1,24 @@
 library(steveHMM)
 library(salad)
 
-path <- "/home/sidonie/Bureau/github/steveHMM/examples/"
+#to adapt to your environment
+path <- "/home/sidonie/Bureau/github/steveHMM/"
 
-source(paste0(path, "geyser_continu_stat.r"))
+source(paste0(path, "examples/geyser_continu/geyser_continu_stat.r"))
 
 test.init.gc <- function(obs, it){
-  qN <- matrix(nrow = it, ncol = 22)
-  colnames(qN) <- c("iter", "a", "b", "muc", "mul", "muls", "sdc", "sdl", "sdls", "pi_c", "pi_l", "init_a", "init_b", "init_muc", "init_mul", "init_muls", "init_sdc", "init_sdl", "init_sdls", "init_pi_c", "init_pi_l", "tps")
-  BW <- matrix(nrow = it, ncol = 22)
-  colnames(BW) <- c("iter", "a", "b", "muc", "mul", "muls", "sdc", "sdl", "sdls", "pi_c", "pi_l", "init_a", "init_b", "init_muc", "init_mul", "init_muls", "init_sdc", "init_sdl", "init_sdls", "init_pi_c", "init_pi_l", "tps")
-  SQ <- matrix(nrow = it, ncol = 24)
-  colnames(SQ) <- c("iter", "a", "b", "muc", "mul", "muls", "sdc", "sdl", "sdls", "pi_c", "pi_l", "init_a", "init_b", "init_muc", "init_mul", "init_muls", "init_sdc", "init_sdl", "init_sdls", "init_pi_c", "init_pi_l","forward", "backward", "tps")
-  QNEM <- matrix(nrow = it, ncol = 24)
-  colnames(QNEM) <- c("iter", "a", "b", "muc", "mul", "muls", "sdc", "sdl", "sdls", "pi_c", "pi_l", "init_a", "init_b", "init_muc", "init_mul", "init_muls", "init_sdc", "init_sdl", "init_sdls", "init_pi_c", "init_pi_l", "forward", "backward", "tps")
+  qN <- matrix(nrow = it, ncol = 23)
+  colnames(qN) <- c("iter", "a", "b", "muc", "mul", "muls", "sdc", "sdl", "sdls", "pi_c", "pi_l", "init_a", "init_b", "init_muc", "init_mul", "init_muls", "init_sdc", "init_sdl", "init_sdls", "init_pi_c", "init_pi_l", "tps", "likelihood")
+  BW <- matrix(nrow = it, ncol = 23)
+  colnames(BW) <- c("iter", "a", "b", "muc", "mul", "muls", "sdc", "sdl", "sdls", "pi_c", "pi_l", "init_a", "init_b", "init_muc", "init_mul", "init_muls", "init_sdc", "init_sdl", "init_sdls", "init_pi_c", "init_pi_l", "tps", "likelihood")
+  SQ <- matrix(nrow = it, ncol = 25)
+  colnames(SQ) <- c("iter", "a", "b", "muc", "mul", "muls", "sdc", "sdl", "sdls", "pi_c", "pi_l", "init_a", "init_b", "init_muc", "init_mul", "init_muls", "init_sdc", "init_sdl", "init_sdls", "init_pi_c", "init_pi_l","forward", "backward", "tps", "likelihood")
+  QNEM <- matrix(nrow = it, ncol = 25)
+  colnames(QNEM) <- c("iter", "a", "b", "muc", "mul", "muls", "sdc", "sdl", "sdls", "pi_c", "pi_l", "init_a", "init_b", "init_muc", "init_mul", "init_muls", "init_sdc", "init_sdl", "init_sdls", "init_pi_c", "init_pi_l", "forward", "backward", "tps", "likelihood")
 
   for(i in 1:it){
     print(i)
-    set.seed(5*i+3)
+    RNGkind("Mer") ; set.seed(5*i+3)
     par <- c(runif(2), runif(3, 0, 6), runif(3,1,3))
 
     d <- Sys.time()
@@ -28,6 +29,7 @@ test.init.gc <- function(obs, it){
       qN[i,2:9] <- qn$par
       qN[i,12:19] <- par
       qN[i,22] <- f-d
+      qN[i,23] <- qn$value
     }
 
     test.em <- function(par){
@@ -41,6 +43,7 @@ test.init.gc <- function(obs, it){
       BW[i,2:9] <- em$theta
       BW[i,12:19] <- par
       BW[i,22] <- f-d
+      BW[i,23] <- em$likelihood
     }
 
     test.sq <- function(par){
@@ -56,10 +59,11 @@ test.init.gc <- function(obs, it){
       SQ[i,22] <- squarem$forwards
       SQ[i,23] <- squarem$backwards
       SQ[i,24] <- f-d
+      SQ[i,25] <- squarem$likelihood
     }
 
     test.qnem <- function(par){
-      qnem <- QNEM(par, obs, modele.geyser.continu.stat, M.step.geyser.continu.stat, lower = rep(0,8), upper = c(1,1, rep(Inf,6)) )
+      qnem <- QNEM(par, obs, modele.geyser.continu.stat, M.step.geyser.continu.stat, lower = rep(0,8), upper = c(1,1, rep(Inf,6)), max.iter = Inf, trace.theta = FALSE )
       return(qnem)}
     d <- Sys.time()
     tr <- try(qnem <- test.qnem(par))
@@ -71,6 +75,7 @@ test.init.gc <- function(obs, it){
       QNEM[i,22] <- qnem$forwards
       QNEM[i,23] <- qnem$backwards
       QNEM[i,24] <- f-d
+      QNEM[i,25] <- qnem$neg.ll
     }
   }
   return(list(BW = BW , SQUAREM = SQ, qN = qN, QNEM = QNEM))
@@ -81,7 +86,8 @@ test.init.gc <- function(obs, it){
 library(MASS)
 X.geyser <- faithful$eruptions
 
+
 #test du nombre d'iterations necessaires avec des points de départ différents
-set.seed(28)
+RNGkind("Mer") ; set.seed(28)
 nb_it_gc <- test.init.gc(X.geyser, 1000)
-# saveRDS(nb_it_gc, paste0(path,"nb_it_geyser_continu_qnem_meot.rds"))
+#saveRDS(nb_it_gc, paste0(path,"results/nb_it_geyser_continu_qnem_meot.rds"))
