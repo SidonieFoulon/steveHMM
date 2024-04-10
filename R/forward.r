@@ -11,7 +11,7 @@ forward <- function(modele) {
 
   alpha <- matrix(NA_real_, ncol = l,nrow = m)
   rownames(alpha) <- rownames(Tr)
-  
+
   beta <- matrix(NA_real_, ncol = l,nrow = m)
   rownames(beta) <- rownames(Tr)
 
@@ -28,14 +28,14 @@ forward <- function(modele) {
   stmp <- sum(tmp)
   beta[,1] <- tmp/stmp
   ll <- log(stmp)
-  
-  for(i in 2:l){ 
+
+  for(i in 2:l){
     alpha[,i] <- beta[,i-1] %*% Tr
-    
+
     tmp <- p.Em[,i]*alpha[,i]
     stmp <- sum(tmp)
     beta[,i] <- tmp/stmp
-    ll <- log(stmp)
+    ll <- ll + log(stmp)
   }
   modele$alpha <- alpha
   modele$beta <- beta
