@@ -138,6 +138,7 @@ QNEM <- function(theta, obs, modele.fun, M.step.fun, max.iter = 100, upper, lowe
         H <- restrict_inverse(H, I) # projection of H
       }
       # est-ce que des variables peuvent être débloquées ?
+      # il est important ici que le gradient ne soit pas le gradient projeté
       I1 <- which( (over & gradient > 0) | (under & gradient) < 0)
       if(any(I1 %in% I)) {
         I <- setdiff(I, I1)
@@ -211,7 +212,7 @@ QNEM <- function(theta, obs, modele.fun, M.step.fun, max.iter = 100, upper, lowe
       ll <- ll1
       fo <- fo1
       theta <- theta1
-      gradient <- gradient1
+      gradient <- fo$likelihood.gradient # "raw" gradient ! the beginning of the loop takes care of this
       QN <- TRUE
     }
     if(trace.theta) Theta[,i] <- theta

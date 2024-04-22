@@ -1,5 +1,5 @@
 require(steveHMM)
-source("~/GENOSTATS/steveHMM/examples/umbrella_example.r")
+source("~/GENOSTATS/steveHMM/examples/umbrella/umbrella_example.r")
 em <- EM(par.parapluie, X.parapluie, modele.parapluie, M.step.parapluie, 200)
 QNEM(par.parapluie, X.parapluie, modele.parapluie, M.step.parapluie, lower = c(0,0), upper = c(1,1), 200)
 
