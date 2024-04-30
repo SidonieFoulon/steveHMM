@@ -16,13 +16,6 @@ for(i in 1:100) {
   D$forwards[i] <- qn$forwards
 }
 
-D0 <- readRDS("test-umbrella.rds")
-cat("max diff theta1 =", max( abs(D$theta1 - D0$theta1) ), "\n")
-cat("max diff theta2 =", max( abs(D$theta2 - D0$theta2) ), "\n")
-cat("forwards :", sum(D$forwards), "vs", sum(D0$forwards), "\n")
-cat("backwards :", sum(D$backwards), "vs", sum(D0$backwards), "\n")
-
-
 if(FALSE) {
 
 N <- 500

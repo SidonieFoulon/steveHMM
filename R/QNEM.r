@@ -139,7 +139,7 @@ QNEM <- function(theta, obs, modele.fun, M.step.fun, max.iter = 100, upper, lowe
       }
       # est-ce que des variables peuvent être débloquées ?
       # il est important ici que le gradient ne soit pas le gradient projeté
-      I1 <- which( (over & gradient > 0) | (under & gradient) < 0)
+      I1 <- which((over & gradient > 0) | (under & gradient < 0))
       if(any(I1 %in% I)) {
         I <- setdiff(I, I1)
         J <- union(J, I1)
