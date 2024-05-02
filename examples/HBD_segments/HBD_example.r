@@ -63,5 +63,5 @@ par.HBD <- c(f = 0.05, a = 0.05)
 em <- EM(par.HBD, X.HBD, modele.HBD.stat, M.step.HBD.stat)
 qnem <- QNEM(par.HBD, X.HBD, modele.HBD.stat, M.step.HBD.stat, upper = c(1,Inf), lower = c(0,0))
 squarem <- SQUAREM(par.HBD, X.HBD, modele.HBD.stat, M.step.HBD.stat, upper = c(1,Inf), lower = c(0,0))
-qn <- quasi_newton(par.HBD, X.HBD, modele.HBD.stat, upper = c(1,Inf), lower = c(0,0))
+qn <- quasi_newton(par.HBD, X.HBD, modele.HBD.stat, upper = c(0.99,Inf), lower = c(0.01,0.01))
 
