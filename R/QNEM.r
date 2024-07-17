@@ -17,14 +17,6 @@
 #'
 #' @return This function returns the final estimation of the parameters in "theta", the final negative likelihood in "neg.ll", the number of iterations in "iter" and the number of forward and backward algorithms steps in resp. "forward" and "backward". If trace.theta = TRUE, it will also return the parameters estimated for each iteration in "Theta".
 #'
-#' @seealso \code{\link{modele_derivatives}}
-#' @seealso \code{\link{forward_ll}}
-#' @seealso \code{\link{backward}}
-#' @seealso \code{\link{H_update}}
-#' @seealso \code{\link{restrict_inverse}}
-#'
-#'
-#'
 #' @export
 
 
@@ -189,7 +181,7 @@ QNEM <- function(theta, obs, modele.fun, M.step.fun, max.iter = 100, upper, lowe
       blocked.value <- ifelse(p >=0, upper, lower)
       lambda.max <- min(lambda.i.max[J], na.rm = TRUE)  # [J] : only unblocked vars
       if(lambda.max <= 0) { # ne devrait pas arriver
-        stop("blocage non repéré")
+        stop("Optimization failed") 
       }
       lambda <- min(1, lambda.max)
       repeat { # bracktracking loop

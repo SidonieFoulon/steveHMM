@@ -1,4 +1,9 @@
-# uses salad::dual to get modele derivatives
+#' @importFrom salad dual
+#' @importFrom salad varnames
+#' @importFrom salad value
+#' @importFrom salad d
+#' @importFrom methods is
+
 modele_derivatives <- function(modele.fun, theta, obs) {
   theta1 <- dual(theta)
   vn <- varnames(theta1)

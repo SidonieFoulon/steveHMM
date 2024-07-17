@@ -1,3 +1,4 @@
+#' @importFrom MASS ginv
 
 if(TRUE) {
 # Vi = l'inverse d'une matrice symmétrique V 

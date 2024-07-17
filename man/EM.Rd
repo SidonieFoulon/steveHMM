@@ -43,8 +43,3 @@ This function returns the final estimation of the parameters in "theta", the num
 \description{
 Baum-Welch EM algorithm.
 }
-\seealso{
-\code{\link{forward}}
-
-\code{\link{backward}}
-}
