@@ -1,10 +1,10 @@
 library(steveHMM)
 library(salad)
 
-#to adapt to your environment
-path <- "/home/sidonie/Bureau/github/steveHMM/"
+#to adapt to your environnment
+path <- "/home/sidonie/Bureau/github/steveHMM/examples/geyser_dicho/"
 
-source(paste0(path, "examples/geyser_dicho/geyser_dicho_stat.r"))
+source(paste0(path, "geyser_dicho_stat.r"))
 
 test.init.gd <- function(obs, it){
   qN <- matrix(nrow = it, ncol = 17)
@@ -86,7 +86,7 @@ test.init.gd <- function(obs, it){
 library(MASS)
 X.dicho <- ifelse(faithful$eruptions < 3, 1,2)
 
-#test du nombre d'iterations necessaires avec des points de départ différents
+#comparison test with 1000 different starting points
 RNGkind("Mer") ; set.seed(28)
 nb_it_gd <- test.init.gd(X.dicho, 1000)
-#saveRDS(nb_it_gd, paste0(path,"results/nb_it_geyser_dicho_qnem_meot.rds"))
+saveRDS(nb_it_gd, "/home/sidonie/Bureau/results/HMM/res_gc.rds") #path to adapt to your environment

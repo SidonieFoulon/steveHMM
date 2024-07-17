@@ -4,8 +4,7 @@ Title: HMM parameters estimation with Baum-Welch algorithm and quasi-Newton meth
 Version: 0.1.0
 Author: Sidonie Foulon
 Maintainer: Sidonie Foulon <sidonie.foulon@inserm.fr>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
+Description: This package can be used to run HMM parameter estimation algorithms such as the Baum-Welch algorithm and the quasi-Newton L-BFGS-B algorithm, but also an accelerated EM algorithm called SQUAREM (Varadhan, 2008). We also created a new algorithm QNEM which mix the Baum-Welch and BFGS algorithms. The latter is more widely explain in an article soon to be published.
 License: What license is it under?
 Encoding: UTF-8
 LazyData: true

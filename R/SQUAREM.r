@@ -1,10 +1,32 @@
-# theta = paramètres de début
-# obs = observations
-# modele.fun = une fonction "modèle"
-# M.step.fun = une fonction M step (input : obs, backward, output : theta)
-# upper, lower = comme dans optim
-# max.iter = max iterations
-# epsilon = critere de convergence
+#' SQUAREM algorithm.
+#'
+#'
+#' @param theta the initial parameters
+#' @param obs the observations data
+#' @param modele.fun a model function
+#' @param M.step.fun a M step function :
+#'        - input : obs, backward
+#'        - output : theta
+#' @param lower the lower bound of the space of parameters
+#' @param upper the upper bound of the space of parameters
+#' @param max.iter maximum number of iteration of the algorithm (default is 100)
+#' @param trace.theta whether you want to keep theta estimation for each iteration (default is TRUE)
+#' @param epsilon if criteria = "eps", algorithm converges if the difference with the previous iteration is lower than eps (default is 1e-5)
+#' @param reltol if criteria = "reltol", constant related to the stopping criterion, often depending on machine precision (default is sqrt(.Machine$double.eps))
+#' @param criteria stopping criterion (default is "reltol")
+#'
+#' @return This function returns the final estimation of the parameters in "theta", the number of iterations in "iter", the number of forward and backward algorithms steps in resp. "forward" and "backward", and the final likelihood in "likelihood". If trace.theta = TRUE, it will also return the parameters estimated for each iteration in "Theta".
+#'
+#' @seealso \code{\link{forward}}
+#' @seealso \code{\link{backward}}
+#'
+#'
+#'
+#' @export
+
+
+
+
 SQUAREM <- function(theta, obs, modele.fun, M.step.fun, lower, upper, max.iter = 100, trace.theta = TRUE, epsilon = 1e-5, reltol = sqrt(.Machine$double.eps), criteria = c("reltol", "eps")) {
   if(is.infinite(max.iter)) trace.theta <- FALSE
   criteria <- match.arg(criteria)

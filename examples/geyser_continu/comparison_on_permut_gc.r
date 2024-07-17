@@ -1,10 +1,10 @@
 library(steveHMM)
 library(salad)
 
-#to adapt to your environment
-path <- "/home/sidonie/Bureau/github/steveHMM/"
+#to adapt to your environnment
+path <- "/home/sidonie/Bureau/github/steveHMM/examples/geyser_continu/"
 
-source(paste0(path, "examples/geyser_continu/geyser_continu_stat.r"))
+source(paste0(path, "geyser_continu_stat.r"))
 
 test.init.gc <- function(obs, it){
   qN <- matrix(nrow = it, ncol = 23)
@@ -87,7 +87,7 @@ library(MASS)
 X.geyser <- faithful$eruptions
 
 
-#test du nombre d'iterations necessaires avec des points de départ différents
+#comparison test with 1000 different starting points
 RNGkind("Mer") ; set.seed(28)
 nb_it_gc <- test.init.gc(X.geyser, 1000)
-#saveRDS(nb_it_gc, paste0(path,"results/nb_it_geyser_continu_qnem_meot.rds"))
+saveRDS(nb_it_gc, "/home/sidonie/Bureau/results/HMM/res_gd.rds") #path to adapt to your environment

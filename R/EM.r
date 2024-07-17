@@ -11,8 +11,9 @@
 #' @param trace.theta whether you want to keep theta estimation for each iteration (default is TRUE)
 #' @param epsilon if criteria = "eps", algorithm converges if the difference with the previous iteration is lower than eps (default is 1e-5)
 #' @param reltol if criteria = "reltol", constant related to the stopping criterion, often depending on machine precision (default is sqrt(.Machine$double.eps))
-#' @param criteria stopping criterion (default is reltol)
+#' @param criteria stopping criterion (default is "reltol")
 #'
+#' @return This function returns the final estimation of the parameters in "theta", the number of iterations in "iter" and the final likelihood in "likelihood". If trace.theta = TRUE, it will also return the parameters estimated for each iteration in "Theta".
 #'
 #' @seealso \code{\link{forward}}
 #' @seealso \code{\link{backward}}
