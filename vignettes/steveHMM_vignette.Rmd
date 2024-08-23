@@ -1,0 +1,131 @@
+---
+title: "steveHMM_vignette"
+author : Sidonie Foulon, Thérèse Truong, Anne-Louise Leutenegger, Hervé Perdry
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{steveHMM_vignette}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+# Introduction
+
+**steveHMM** package contain several functions. The aim is to estimate the Hidden Markov model (HMM) parameters via different methods. The four main functions corresponds to four maximum likelihood algorithms : \
+
+* **quasi_newton** : direct maximisation of the likelihood with a quasi-Newton algorithm (L-BFGS-B)\
+* **EM** : Baum-Welch algorithm, an Expectation-Maximisation (EM) algorithm \
+* **SQUAREM** : Squared iterative method, an accelerated EM algorithm (Varadhan, 2008) \
+* **QNEM** : our novel hybrid algorithm, combines the Baum-Welch and quasi-Newton BFGS algorithm. \
+
+We will show how to use each of these four functions on an example.
+
+# Example
+
+We will use a simple example based on a fictitious situation. Every day of the year, in a secret underground installation, a security guard observes whether the director comes in with an umbrella or not (Gao, 2021). During 56 days, the security guard keep track of his observations on his note pad as follows: U if the director carries an umbrella; N otherwise.  
+The guards aims to predict the daily weather conditions (hidden states) based on the umbrella observations: rainy (noted R) or dry (noted D) day. Here the hidden state is the weather.  
+Since the security guard is in a underground installation, he can not observe directly the weather: he has to rely only on his observations of the umbrella status to determine the weather. The parameters to estimate are *a* the probability of weather state transition and *b* the probability of error in the umbrella status (not carrying an umbrella on rainy day or carrying an umbrella on dry day). The transition and emission matrix are presented respectively in the following Tables.
+
+| Transition matrix | $S_i = D$ | $S_i = R$ |
+|:-----------------:|:---------:|:---------:|
+|   $S_{i-1} = D$   |    1-a    |     a     |
+|   $S_{i-1} = R$   |     a     |    1-a    |
+
+
+| Emission matrix | $S_i = D$ | $S_i = R$ |
+|:---------------:|:---------:|:---------:|
+|    $X_i = N$    |    1-b    |     b     |
+|    $X_i = U$    |     b     |    1-b    |
+
+Here are the observations *X* for our example (1 code for "No umbrella" and 2 for "Umbrella") and the initial parameters *par*.
+
+```{r}
+X <- c(1, 1, 2, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 1, 2, 2, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 2, 2, 2, 1,
+    2, 2, 1, 2, 2, 1, 2, 2, 2, 2, 2, 1, 2, 2, 2)
+
+par <- c(a = 0.3, b = 0.15)
+
+```
+
+
+# Model
+
+Before running our functions, we have to create the model of the example. The function **model** takes the set of parameters *theta*, the observations *obs* and the names of the hidden states *name.S*. It returns in a list, the transition matrix *trans*, the stationary probability *pi* and a matrix of the emission probabilities for each observation *p.emiss*.
+
+*trans* is constructed from the transition parameter *a*. 
+In this example, the stationary state does not depend on any of the two parameters. For some examples, the stationary state may be computed from the parameters.
+*p.emiss* is constructed from the emission parameter *b*. It is a matrix of the same number of columns as the length of *obs* (here 56) and one rows by hidden state (here two).
+
+```{r}
+model <- function(theta, obs, name.S = c("Dry", "Rainy")) {
+  
+  # parameter of transition matrix 
+  a <- theta[1]
+  trans <- matrix( c(1-a, a, a, 1-a), byrow = TRUE, nrow = 2, ncol = 2)
+  colnames(trans) <- rownames(trans) <- name.S
+  
+  # stationary state
+  stat <- c(0.5, 0.5)
+  
+  # parameter of emission matrix
+  b <- theta[2]
+  p.emiss <- rbind(ifelse(obs == 1, 1-b, b), ifelse(obs == 1, b, 1-b))
+  rownames(p.emiss) <- name.S
+  
+  #return
+  list(trans = trans, pi = stat, p.emiss = p.emiss)
+}
+
+mod <- model(theta = par, obs = X)
+mod
+
+```
+
+
+
+
+This **model** function will be used in all four main functions.
+
+
+# M-step
+
+The M-step corresponds to the maximisation step of the EM algorithm. This step depends on the model so can not be generalised, on the contrary of the E-step. The **M.step** function takes the observations *obs* and the backward results *backward* from the forward-backward algorithm used in E-step. The backward can be computed from the **backward** function of the **steveHMM* package.
+```{r setup}
+library(steveHMM)
+```
+
+```{r, error = TRUE}
+fw <- forward(modele = mod)
+
+bw <- backward(modele = fw)
+
+```
+
+
+
+```{r}
+M.step <- function(obs, backward) {
+  l <- ncol(backward$phi)
+  # a = proba de changement d'état caché (-> trans)
+  a <- (sum(backward$delta[1,2,] + backward$delta[2,1,]))/(l-1)
+  # b = proba d'erreur dans le choix No Umbrella/Umbrella (-> emiss)
+  b <- (sum(backward$phi[2,which(obs == 1)]) + sum(backward$phi[1,which(obs == 2)]))/l
+  c(a,b)
+}
+
+```
+
+```{r}
+EM(par, X, model, M.step, max.iter = 200, trace.theta = TRUE)
+```
+
+
+
+

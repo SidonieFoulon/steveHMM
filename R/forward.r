@@ -1,3 +1,10 @@
+#' Forward algorithm
+#'
+#' @param modele a model function
+#'
+#' @export
+#'
+
 forward <- function(modele) {
   Tr <- modele$trans
   p.Em <- modele$p.emiss

@@ -3,4 +3,6 @@
 export(EM)
 export(QNEM)
 export(SQUAREM)
+export(backward)
+export(forward)
 export(quasi_newton)

@@ -1,3 +1,10 @@
+#' Backward algorithm
+#'
+#' @param modele the forward agorithm results
+#'
+#' @export
+#'
+
 backward <- function(modele) {
   Tr <- modele$trans
   p.Em <- modele$p.emiss
