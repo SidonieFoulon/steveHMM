@@ -1,3 +1,6 @@
+#' @importFrom utils capture.output
+#' @importFrom stats optim
+
 capture_quasi_newton <- function(...) {
 
   L <- list(...)

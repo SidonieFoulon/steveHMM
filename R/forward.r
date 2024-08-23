@@ -1,17 +1,17 @@
+<<<<<<< HEAD
 #' Forward algorithm
 #'
 #' @param modele a model function
 #'
 #' @export
 #'
+=======
+>>>>>>> fbedfc2faf19b83b437296c93248a479e48507e4
 
 forward <- function(modele) {
   Tr <- modele$trans
   p.Em <- modele$p.emiss
   pi <- modele$pi
-
-  dd <- is(Tr, "dual") | is(p.Em, "dual") | is(pi, "dual")
-  if(dd) vn <- unique(c(varnames(Tr), varnames(p.Em), varnames(pi)))
 
   l <- ncol(p.Em)
   m <- nrow(Tr)
@@ -21,11 +21,6 @@ forward <- function(modele) {
 
   beta <- matrix(NA_real_, ncol = l,nrow = m)
   rownames(beta) <- rownames(Tr)
-
-  if(dd) {
-    alpha <- dual(alpha, varnames = vn, constant = TRUE)
-    beta  <- dual(beta,  varnames = vn, constant = TRUE)
-  }
 
   # initialisation
   # alpha1 = stationnaire

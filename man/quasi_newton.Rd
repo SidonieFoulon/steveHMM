@@ -14,6 +14,8 @@ quasi_newton(theta, obs, modele.fun, trace = FALSE, ...)
 \item{modele.fun}{a model function}
 
 \item{trace}{whether you want to keep theta estimation for each iteration (default is FALSE)}
+
+\item{...}{extra parameters for 'optim'}
 }
 \value{
 This function returns the same values than the optim function. Moreover, the number of forward algorithm steps can be found in "nb.fw".
@@ -23,7 +25,4 @@ Quasi-Newton L-BFGS-B algorithm.
 }
 \details{
 You can also add optim function parameters.
-}
-\seealso{
-\code{\link{neg_log_likelihood_gradient}}
 }

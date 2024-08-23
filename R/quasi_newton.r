@@ -5,14 +5,11 @@
 #' @param obs the observations data
 #' @param modele.fun a model function
 #' @param trace whether you want to keep theta estimation for each iteration (default is FALSE)
+#' @param ... extra parameters for 'optim'
 #'
 #' @details You can also add optim function parameters.
 #'
 #' @return This function returns the same values than the optim function. Moreover, the number of forward algorithm steps can be found in "nb.fw".
-#'
-#' @seealso \code{\link{neg_log_likelihood_gradient}}
-#'
-#'
 #'
 #' @export
 

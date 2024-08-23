@@ -17,10 +17,6 @@
 #'
 #' @return This function returns the final estimation of the parameters in "theta", the number of iterations in "iter", the number of forward and backward algorithms steps in resp. "forward" and "backward", and the final likelihood in "likelihood". If trace.theta = TRUE, it will also return the parameters estimated for each iteration in "Theta".
 #'
-#' @seealso \code{\link{forward}}
-#' @seealso \code{\link{backward}}
-#'
-#'
 #'
 #' @export
 

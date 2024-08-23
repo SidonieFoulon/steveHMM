@@ -49,14 +49,3 @@ This function returns the final estimation of the parameters in "theta", the fin
 \description{
 QNEM algorithm.
 }
-\seealso{
-\code{\link{modele_derivatives}}
-
-\code{\link{forward_ll}}
-
-\code{\link{backward}}
-
-\code{\link{H_update}}
-
-\code{\link{restrict_inverse}}
-}

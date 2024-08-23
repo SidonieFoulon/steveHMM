@@ -49,8 +49,3 @@ This function returns the final estimation of the parameters in "theta", the num
 \description{
 SQUAREM algorithm.
 }
-\seealso{
-\code{\link{forward}}
-
-\code{\link{backward}}
-}
