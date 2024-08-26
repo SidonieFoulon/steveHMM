@@ -61,7 +61,7 @@ Before running our functions, we have to create the model of the example. The fu
 
 *trans* is constructed from the transition parameter *a*. 
 In this example, the stationary state does not depend on any of the two parameters. For some examples, the stationary state may be computed from the parameters.
-*p.emiss* is constructed from the emission parameter *b*. It is a matrix of the same number of columns as the length of *obs* (here 56) and one rows by hidden state (here two).
+*p.emiss* is constructed from the emission parameter *b*. It is a matrix of the same number of columns as the length of *obs* (here 56) and one rows by hidden state (here 2).
 
 ```{r}
 model <- function(theta, obs, name.S = c("Dry", "Rainy")) {
@@ -96,36 +96,87 @@ This **model** function will be used in all four main functions.
 
 # M-step
 
-The M-step corresponds to the maximisation step of the EM algorithm. This step depends on the model so can not be generalised, on the contrary of the E-step. The **M.step** function takes the observations *obs* and the backward results *backward* from the forward-backward algorithm used in E-step. The backward can be computed from the **backward** function of the **steveHMM* package.
-```{r setup}
+The M-step corresponds to the maximisation step of the EM algorithm. This step depends on the model so can not be generalised, on the contrary of the E-step. The **M.step** function takes the observations *obs* and the backward results *backward* from the forward-backward algorithm used in E-step. The backward can be computed with the **backward** function of the **steveHMM** package. This function takes the results of the **forward** algorithm, obtained with the so-called function.
+
+```{r setup, message = FALSE}
 library(steveHMM)
 ```
 
-```{r, error = TRUE}
+```{r}
 fw <- forward(modele = mod)
 
 bw <- backward(modele = fw)
 
 ```
 
+Here is how is constructed a M-step function. The parameter *a* corresponds to the probability of change in the hidden state, ie. switching from a dry day to a rainy day and vice versa. In the results of the backward algorithm, $\delta_i(s,t) = \mathbb{P}_{\theta}(S_{i-1}=s, S_i=t | X_1^{L} = x_1^{L})$. The probability of change will be the sum of prbablities $\delta_i(D,R)$ and $\delta_i(R,D)$ on the total number of transitions.
+For the parameter *b*, the parameter of error in the umbrella status, ie. bringing an umbrella on a dry day or forget it on a rainy day, we will use another backward algorithm result. We rely here on the probability $\varphi_i(s) = \mathbb{P}_{\theta}(S_i=s | X_1^{L} = x_1^{L})$. To estimate *b*, we sum the probabilities $\varphi_i(R)$ only on the observations coded 1 for "No umbrella", and $\varphi_i(D)$ only on the observations coded 2 for "Umbrella", divided by the total number of observations.
 
+The **M.step** function returns the re-estimated parameters.
 
 ```{r}
 M.step <- function(obs, backward) {
   l <- ncol(backward$phi)
-  # a = proba de changement d'état caché (-> trans)
+  
+  # parameter a
   a <- (sum(backward$delta[1,2,] + backward$delta[2,1,]))/(l-1)
-  # b = proba d'erreur dans le choix No Umbrella/Umbrella (-> emiss)
+  
+  # parameter b
   b <- (sum(backward$phi[2,which(obs == 1)]) + sum(backward$phi[1,which(obs == 2)]))/l
+  
   c(a,b)
 }
 
+Mstep <- M.step(obs =X, backward = bw)
+Mstep
+
 ```
+
+This function will be used for all four main functions, except the **quasi_newton** function.
+
+# quasi_newton function
+
+The **quasi_newton** function let us estimate the HMM parameters with direct maximisation of the likelihood. We use a quasi-Newton type method called L-BFGS-B. In this function we are using the R function **optim**. 
+**quasi_newton** function takes the initial parameters *theta*, the observations *obs*, the model function previously constructed in *modele.fun*. If you want to keep track of the different estimations of the parameters, you can use the argument *trace*. You can also add the arguments specific to the **optim** function. Here we added the arguments *lower* and *upper* related to the bounds for the estimations of the parameters *a* and *b*.
 
 ```{r}
-EM(par, X, model, M.step, max.iter = 200, trace.theta = TRUE)
+qn <- quasi_newton(theta = par, obs = X, modele.fun = model, trace = TRUE, lower = c(0.01,0.01), upper = c(0.99,0.99))
+qn
 ```
 
+This function returns the same output as the **optim** function, more the number of forward algorithm calls.
 
+# EM function
+
+With this function, we can apply the Baum-Welch algorithm, a variant of the EM algorithm. **EM** function takes the initial parameters *theta*, the observations *obs*, the model and M.step functions previously constructed in respectively *modele.fun* and *M.step.fun*. There also are optional arguments such as *max.iter* to bound the number of iterations of the algorithm or *trace.theta* to keep track of the different estimations of the parameters. By default, the stopping criterion is *reltol*, but it can be switched to a threshold stopping criterion with "*criteria* = 'epsilon' ".
+
+```{r}
+em <- EM(theta = par, obs = X, modele.fun = model, M.step.fun = M.step, max.iter = 100, trace.theta = TRUE, criteria = "reltol")
+em
+```
+
+The function returns a list with the final estimation of the parameters *theta*, the number of iterations *iter*, the *likelihood* and if the *trace.theta* option is on, the track of all parameters estimated in *Theta*.
+
+# SQUAREM function
+
+The SQUAREM function is used to apply the accelerated EM algorithm SQUAREM. Its arguments are the same as **EM** function. You can also bound the space of parameters with *lower* and *upper* arguments.
+
+```{r}
+squarem <- SQUAREM(theta = par, obs = X, modele.fun = model, M.step.fun = M.step, lower = c(0,0), upper = c(1,1), max.iter = 100, trace.theta = TRUE, criteria = "reltol")
+squarem
+```
+
+Additional to the values returned by the **EM** function, **SQUAREM** returns the number of *forward* and *backward* algorithms performed.
+
+# QNEM function
+
+The last function, we are presenting here is the **QNEM** function, an implementation of our algorithm which mix the Baum-Welch EM and the quasi-Newton BFGS algorithms. The mandatory arguments are the same as the **EM** function. Yet, you can also add some optional arguments, such as those used by the **SQUAREM** function, but also you can set the number of Baum-Welch algorithm to perform before switching to BFGS algorithm (here, we chose 3, ie. the algorithm will perform 3 iterations of the Baum-Welch algorithm, then only the BFGS algorithm, unless the curvature condition is not met anymore). To display information while running the algorithm, you can add "*verbose* = TRUE".
+
+```{r}
+qnem <- QNEM(theta = par, obs = X, modele.fun = model, M.step.fun = M.step, max.iter = 100, upper = c(1,1), lower = c(0,0), trace.theta = TRUE, nb.em = 3, verbose = TRUE)
+qnem
+```
+
+The function returns the same output as the **SQUAREM** function.
 
 
