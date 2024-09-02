@@ -7,7 +7,10 @@
 backward(modele)
 }
 \arguments{
-\item{modele}{the forward agorithm results}
+\item{modele}{the forward algorithm results}
+}
+\value{
+This function returns the the probabilities "delta" and "phi" in a matrix.
 }
 \description{
 Backward algorithm

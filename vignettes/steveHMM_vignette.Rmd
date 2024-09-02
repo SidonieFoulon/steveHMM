@@ -24,6 +24,8 @@ knitr::opts_chunk$set(
 * **SQUAREM** : Squared iterative method, an accelerated EM algorithm (Varadhan, 2008) \
 * **QNEM** : our novel hybrid algorithm, combines the Baum-Welch and quasi-Newton BFGS algorithm. \
 
+These four functions will rely on two other functions that the users must create depending on their HMM model : a function **model**, used for all four main functions and a function **M-step** used for all main functions except **quasi_newton**.
+
 We will show how to use each of these four functions on an example.
 
 # Example
@@ -91,7 +93,6 @@ mod
 
 
 
-This **model** function will be used in all four main functions.
 
 
 # M-step
@@ -132,7 +133,6 @@ Mstep
 
 ```
 
-This function will be used for all four main functions, except the **quasi_newton** function.
 
 # quasi_newton function
 

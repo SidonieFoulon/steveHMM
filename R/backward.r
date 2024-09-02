@@ -1,6 +1,8 @@
 #' Backward algorithm
 #'
-#' @param modele the forward agorithm results
+#' @param modele the forward algorithm results
+#'
+#' @return This function returns the the probabilities "delta" and "phi" in a matrix.
 #'
 #' @export
 #'

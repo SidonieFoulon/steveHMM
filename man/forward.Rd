@@ -9,6 +9,9 @@ forward(modele)
 \arguments{
 \item{modele}{a model function}
 }
+\value{
+This function returns the the probabilities "alpha" and "beta" in a matrix and the log-likelihood in "likelihood".
+}
 \description{
 Forward algorithm
 }

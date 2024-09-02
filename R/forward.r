@@ -1,12 +1,13 @@
-<<<<<<< HEAD
 #' Forward algorithm
 #'
 #' @param modele a model function
 #'
+#' @return This function returns the the probabilities "alpha" and "beta" in a matrix and the log-likelihood in "likelihood".
+#'
+#'
 #' @export
 #'
-=======
->>>>>>> fbedfc2faf19b83b437296c93248a479e48507e4
+
 
 forward <- function(modele) {
   Tr <- modele$trans
