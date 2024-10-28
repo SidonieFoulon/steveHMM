@@ -38,7 +38,7 @@ M.step.HBD.stat <- function(obs, backward, d=0.1) {
 
   tr <- matrix(c(1 - a, a, b, 1 - b),byrow=TRUE, nrow=2)
 
-  # f 
+  # f
   f <- tr[1,2] / (tr[1,2] + tr[2,1])
   # a
   a <- log(1 - tr[1,2] - tr[2,1]) / -d
@@ -50,6 +50,7 @@ M.step.HBD.stat <- function(obs, backward, d=0.1) {
 
 
 #our observations :
+setwd("~/Bureau/github/steveHMM/examples/HBD_segments")
 D <- read.table("mozza.tsv", header = TRUE)
 
 # a submap :
