@@ -8,8 +8,8 @@
 #'        - input : obs, backward
 #'        - output : theta
 #' @param max.iter maximum number of iteration of the algorithm (default is 100)
-#' @param upper the upper bound of the space of parameters
-#' @param lower the lower bound of the space of parameters
+#' @param upper the upper bound of the space of parameters (box constraints)
+#' @param lower the lower bound of the space of parameters (box constraints)
 #' @param trace.theta whether you want to keep theta estimation for each iteration (default is TRUE)
 #' @param reltol if criteria = "reltol", constant related to the stopping criterion, often depending on machine precision (default is sqrt(.Machine$double.eps))
 #' @param nb.em the number of Baum-Welch EM algorithm to perform before switching to BFGS algorithm
@@ -21,9 +21,10 @@
 
 
 
-QNEM <- function(theta, obs, modele.fun, M.step.fun, max.iter = 100, upper, lower, trace.theta = TRUE, reltol = sqrt(.Machine$double.eps), nb.em, verbose = FALSE){
+QNEM <- function(theta, obs, modele.fun, M.step.fun, max.iter = 100, upper, lower,  
+                 trace.theta = TRUE, reltol = sqrt(.Machine$double.eps), nb.em, verbose = FALSE){
   c.armijo <- 1e-4
-  tau_backt <- .5
+  tau_backt <- .1
   if(missing(nb.em)) {
     if(verbose) cat("number of EM iterations determined by convexity\n")
     auto.em <- TRUE
@@ -173,20 +174,25 @@ QNEM <- function(theta, obs, modele.fun, M.step.fun, max.iter = 100, upper, lowe
       p <- -(H %*% gradient)
       p.grad <- sum( (p * gradient)[J] )
       if(p.grad > 0) { # pas une bonne direction... ne devrait pas arriver
-        stop("bad direction\n")
+        if(verbose) cat("Bad direction in BFGS\n")
+        # on va zapper la line search et repartir sur l'EM
+        lambda.i.max <- rep(0, d) # ceci va produire lambda.max = 0
+      } else {
+        # preparing for backtracking
+        lambda.i.max <- ifelse(p > 0, (upper - theta)/p, ifelse(p < 0, (lower - theta)/p, Inf))
       }
-      # preparing for backtracking
-      lambda.i.max <- ifelse(p > 0, (upper - theta)/p, ifelse(p < 0, (lower - theta)/p, Inf))
 
-      blocked.value <- ifelse(p >=0, upper, lower)
       lambda.max <- min(lambda.i.max[J], na.rm = TRUE)  # [J] : only unblocked vars
-      if(lambda.max <= 0) { # ne devrait pas arriver
-        stop("Optimization failed") 
+      if(lambda.max < 0) { # ne devrait pas arriver
+        if(verbose) cat("BFGS failing...\n") 
+        lambda.max <- 0
       }
+
       lambda <- min(1, lambda.max)
+      blocked.value <- ifelse(p >=0, upper, lower)
       repeat { # bracktracking loop
         theta1 <- theta + lambda * p
-        if(all(theta1 == theta)) # did we really backtrack this far ?
+        if(all(theta1 == theta)) # did we really backtrack this far ? (or lambda was 0!)
           break
         if(lambda == lambda.max) { # block variables
           # -> first take care of rounding errors

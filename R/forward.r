@@ -2,8 +2,8 @@
 #'
 #' @param modele a model function
 #'
-#' @return This function returns the the probabilities "alpha" and "beta" in a matrix and the log-likelihood in "likelihood".
-#'
+#' @return A list with components `alpha`, `beta`, and `likelihood`. `alpha` and `beta` are matrices with the
+#' the forward probabilities, a and `likelihood` is the log-likelihood.
 #'
 #' @export
 #'
@@ -13,6 +13,24 @@ forward <- function(modele) {
   Tr <- modele$trans
   p.Em <- modele$p.emiss
   pi <- modele$pi
+
+  if(is.list(p.Em)) {
+    n <- length(p.Em)
+    mo <- modele
+
+    modele$alpha <- vector("list", n)
+    modele$beta  <- vector("list", n)
+    ll <- 0
+    for(i in 1:n) {
+      mo$p.emiss <- p.Em[[i]]
+      fo <- forward(mo)
+      modele$alpha[[i]] <- fo$alpha
+      modele$beta[[i]]  <- fo$beta
+      ll <- ll + fo$likelihood
+    }
+    modele$likelihood <- ll
+    return(modele)
+  }
 
   l <- ncol(p.Em)
   m <- nrow(Tr)

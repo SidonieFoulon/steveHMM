@@ -1,4 +1,4 @@
-# forward that compute log likelihood and its gradient
+# forward that compute neg log likelihood and its gradient
 forward_ll <- function(modele, keep.forward) {
 
   Tr <- modele$trans
@@ -8,6 +8,34 @@ forward_ll <- function(modele, keep.forward) {
   d.Tr <- modele$dtrans
   d.p.Em <- modele$dp.emiss
   d.Pi <- modele$dpi
+
+  if(is.list(p.Em)) {
+    n <- length(p.Em)
+    mo <- modele
+
+    if(keep.forward) {
+      modele$alpha <- vector("list", n)
+      modele$beta  <- vector("list", n)
+    }
+
+    ll <- 0
+    gr <- 0
+    for(i in 1:n) {
+      mo$p.emiss <- p.Em[[i]]
+      mo$dp.emiss <- d.p.Em[[i]]
+      fo <- forward_ll(mo, keep.forward)
+      if(keep.forward) {
+        modele$alpha[[i]] <- fo$alpha
+        modele$beta[[i]]  <- fo$beta
+      }
+      ll <- ll + fo$likelihood
+      gr <- gr + fo$likelihood.gradient
+    }
+    modele$likelihood <- ll
+    modele$likelihood.gradient <- gr
+    return(modele)
+  }
+
 
   l <- ncol(p.Em)
   m <- nrow(Tr)

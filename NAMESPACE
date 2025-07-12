@@ -2,6 +2,7 @@
 
 export(EM)
 export(QNEM)
+export(QNEM2)
 export(SQUAREM)
 export(backward)
 export(forward)

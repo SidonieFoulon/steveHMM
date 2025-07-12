@@ -12,14 +12,16 @@
 #' @param epsilon if criteria = "eps", algorithm converges if the difference with the previous iteration is lower than eps (default is 1e-5)
 #' @param reltol if criteria = "reltol", constant related to the stopping criterion, often depending on machine precision (default is sqrt(.Machine$double.eps))
 #' @param criteria stopping criterion (default is "reltol")
+#' @param verbose if \code{TRUE}, displays information on the process (default is FALSE)
 #'
 #' @return This function returns the final estimation of the parameters in "theta", the number of iterations in "iter" and the final likelihood in "likelihood". If trace.theta = TRUE, it will also return the parameters estimated for each iteration in "Theta".
 #'
 #'
 #' @export
 
+EM <- function(theta, obs, modele.fun, M.step.fun, max.iter = 100, trace.theta = TRUE, epsilon = 1e-5, reltol = sqrt(.Machine$double.eps), 
+               criteria = c("reltol", "eps"), verbose = FALSE) {
 
-EM <- function(theta, obs, modele.fun, M.step.fun, max.iter = 100, trace.theta = TRUE, epsilon = 1e-5, reltol = sqrt(.Machine$double.eps), criteria = c("reltol", "eps")){
   if(is.infinite(max.iter)) trace.theta <- FALSE
   max.iter <- max(max.iter, 3)
   criteria <- match.arg(criteria)
@@ -36,6 +38,10 @@ EM <- function(theta, obs, modele.fun, M.step.fun, max.iter = 100, trace.theta =
   mod <- modele.fun(theta, obs)
   fo <- forward(mod)
   ll <- fo$likelihood
+
+  if(verbose) cat("theta =", as.vector(theta), "\n")
+  if(verbose) cat("neg log likelihood =", -ll, "\n")
+
   ba <- backward(fo)
   theta <- M.step.fun(obs, ba)
   if(trace.theta) Theta[,i] <- theta
@@ -44,7 +50,13 @@ EM <- function(theta, obs, modele.fun, M.step.fun, max.iter = 100, trace.theta =
 
   repeat {
     mod <- modele.fun(theta, obs)
-    if(any(is.infinite(mod$p.emiss))) {
+    if(is.list(mod$p.emiss)) {
+      test <- any(sapply( mod$p.emiss, \(x) any(is.infinite(x)) ))
+    } else {
+      test <- any(is.infinite(mod$p.emiss))
+    }
+
+    if(test) {
       warning("Infinite density in model")
       i <- i-1
       break
@@ -52,6 +64,10 @@ EM <- function(theta, obs, modele.fun, M.step.fun, max.iter = 100, trace.theta =
     # Etape E
     fo <- forward(mod)
     ll1 <- fo$likelihood
+
+    if(verbose) cat("theta =", as.vector(theta), "\n")
+    if(verbose) cat("neg log likelihood =", -ll1, "\n")
+
     rel.ll <- abs(ll - ll1) / (abs(ll) + reltol)
     ba <- backward(fo)
 

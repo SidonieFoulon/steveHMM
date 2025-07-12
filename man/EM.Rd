@@ -13,7 +13,8 @@ EM(
   trace.theta = TRUE,
   epsilon = 1e-05,
   reltol = sqrt(.Machine$double.eps),
-  criteria = c("reltol", "eps")
+  criteria = c("reltol", "eps"),
+  verbose = FALSE
 )
 }
 \arguments{
@@ -36,6 +37,8 @@ EM(
 \item{reltol}{if criteria = "reltol", constant related to the stopping criterion, often depending on machine precision (default is sqrt(.Machine$double.eps))}
 
 \item{criteria}{stopping criterion (default is "reltol")}
+
+\item{verbose}{if \code{TRUE}, displays information on the process (default is FALSE)}
 }
 \value{
 This function returns the final estimation of the parameters in "theta", the number of iterations in "iter" and the final likelihood in "likelihood". If trace.theta = TRUE, it will also return the parameters estimated for each iteration in "Theta".

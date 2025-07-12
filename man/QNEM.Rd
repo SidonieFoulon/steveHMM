@@ -31,9 +31,9 @@ QNEM(
 
 \item{max.iter}{maximum number of iteration of the algorithm (default is 100)}
 
-\item{upper}{the upper bound of the space of parameters}
+\item{upper}{the upper bound of the space of parameters (box constraints)}
 
-\item{lower}{the lower bound of the space of parameters}
+\item{lower}{the lower bound of the space of parameters (box constraints)}
 
 \item{trace.theta}{whether you want to keep theta estimation for each iteration (default is TRUE)}
 

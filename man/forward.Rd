@@ -10,7 +10,8 @@ forward(modele)
 \item{modele}{a model function}
 }
 \value{
-This function returns the the probabilities "alpha" and "beta" in a matrix and the log-likelihood in "likelihood".
+A list with components `alpha`, `beta`, and `likelihood`. `alpha` and `beta` are matrices with the
+the forward probabilities, a and `likelihood` is the log-likelihood.
 }
 \description{
 Forward algorithm
