@@ -145,7 +145,6 @@ M.step.eye <- function(obs, backward) {
     e32 <- f_emiss(backward$phi, obs, 3, 2) / p.S2
   }
 
-
   ### etats initiaux ###
   if(is.list(backward$phi)) {
     pi1 <- mean(sapply(backward$phi, \(phi) phi[1,1]))
@@ -160,7 +159,7 @@ M.step.eye <- function(obs, backward) {
     pi1, pi2)
 }
 
-# version non vectorisée
+# version non "vectorisée"
 M.step.eye.0 <- function(obs, backward) {
   l <- ncol(backward$phi)
 

@@ -62,12 +62,20 @@ QNEM2 <- function(theta, obs, modele.fun, M.step.fun, max.iter = 100, lin.coeff,
 
   # On amorce les calculs avant d'entrer dans la boucle
   # ** fo est supposé exister en début de boucle pour le point courant **
-  # take modele derivatives
-  mod <- modele_derivatives(modele.fun, theta, obs)
-  fo <- forward_ll(mod, TRUE)
-  nb.fw <- nb.fw + 1L
-  ll <- fo$likelihood
-  gradient <- fo$likelihood.gradient
+  if(nb.em < 2) {
+    # take modele derivatives
+    mod <- modele_derivatives(modele.fun, theta, obs)
+    fo <- forward_ll(mod, TRUE)
+    nb.fw <- nb.fw + 1L
+    ll <- fo$likelihood
+    gradient <- fo$likelihood.gradient
+  } else {
+    mod <- modele.fun(theta, obs)
+    fo <- forward(mod)
+    nb.fw <- nb.fw + 1L
+    ll <- -fo$likelihood
+    gradient <- rep(0, d)
+  }
   convex <- FALSE
 
   # the big loop
@@ -87,28 +95,35 @@ QNEM2 <- function(theta, obs, modele.fun, M.step.fun, max.iter = 100, lin.coeff,
       # Etape M
       theta1 <- M.step.fun(obs, ba)
 
-      # enforce contraints 
-      C.theta <- lin.coeff %*% theta
-      for(r in seq_len(nc)) {
-        if( C.theta[r] > lin.upper[r] ) { 
-          # back to the border
-          theta <- theta + ( lin.upper[r] - C.theta[r] ) * lin.coeff[r,] / sum( lin.coeff[r,]**2 )
-        }
-      }
-
       # in some cases, the M step produces NA's (e.g. conditionnal probabilities computed as 0/0)
       # this should be a correct way to deal with this
       # when a latent state has probability 0,
       # some of the parameters may be undefined: keep last value
       theta1 <- ifelse(is.na(theta1), theta, theta1)
 
-      # on commence à préparer la boucle suivante
-      mod <- modele_derivatives(modele.fun, theta1, obs)
-      fo <- forward_ll(mod, TRUE)
+      # enforce constraints 
+      C.theta <- lin.coeff %*% theta1
+      for(r in seq_len(nc)) {
+        if( C.theta[r] > lin.upper[r] ) { 
+          # back to the border
+          theta1 <- theta1 + ( lin.upper[r] - C.theta[r] ) * lin.coeff[r,] / sum( lin.coeff[r,]**2 )
+        }
+      }
 
-      nb.fw <- nb.fw + 1L
-      ll1 <- fo$likelihood
-      gradient1 <- fo$likelihood.gradient
+      # on commence à préparer la boucle suivante
+      if(nb.em < 2) {
+        mod <- modele_derivatives(modele.fun, theta1, obs)
+        fo <- forward_ll(mod, TRUE)
+        nb.fw <- nb.fw + 1L
+        ll1 <- fo$likelihood
+        gradient1 <- fo$likelihood.gradient
+      } else {
+        mod <- modele.fun(theta1, obs)
+        fo <- forward(mod)
+        nb.fw <- nb.fw + 1L
+        ll1 <- -fo$likelihood
+        gradient1 <- rep(0, d)
+      }
 
       # can happen near the border
       if(any(is.na(gradient1))) {
@@ -125,7 +140,7 @@ QNEM2 <- function(theta, obs, modele.fun, M.step.fun, max.iter = 100, lin.coeff,
       rel.ll <- abs(ll - ll1) / (abs(ll) + reltol)
 
       # update H if convex
-      if(sum(s*y) > 0) {
+      if(sum(s*y) > 0 & nb.em < 2) {
         if(verbose) cat("locally convex region\n")
         convex <- TRUE
         H <- H_update(H, s, y)
@@ -141,37 +156,40 @@ QNEM2 <- function(theta, obs, modele.fun, M.step.fun, max.iter = 100, lin.coeff,
       QN <- FALSE
     } else { # QN
       if(verbose) cat("QN\n")
+
+      # -- set of active constraints --
+      # are we on this border and pointing outsite ?
+      C.theta <- lin.coeff %*% theta
+      w <- which( abs(C.theta - lin.upper) < 1e-8 )
+      D <- lin.coeff[w,,drop=FALSE]
+
       if(any(is.na(H))) { # aucun pas d'EM n'a updaté H
         H <- diag(d)
       }
+ 
+      # project H
+      H.pro <- project.H(H, D)
+      # project.gradient 
+      gradient.pro <- project.vector(gradient, D)
 
       # research direction
-      p <- -(H %*% gradient)
+      p <- -(H.pro %*% gradient.pro)
 
-      # Linear constraints.
-      C.theta <- lin.coeff %*% theta
-      for(r in seq_len(nc)) {
-        # back to the border if necessary
-        if( C.theta[r] > lin.upper[r] ) { 
-          theta <- theta + ( lin.upper[r] - C.theta[r] ) * lin.coeff[r,] / sum( lin.coeff[r,]**2 )
-        }
-        # simply project research direction
-        # are we on this border ?
-        if( abs( C.theta[r] - lin.upper[r] ) < 1e-8 ) { 
-           p <- p - sum(lin.coeff[r, ] * p) * lin.coeff[r,] / sum( lin.coeff[r,]**2 )     
-        }
-      }
+      # projecting research direction
+      # p <- project.vector(p, D)
 
       p.grad <- sum( (p * gradient) )
       if(p.grad > 0) { # pas une bonne direction... ne devrait pas arriver
-        if(verbose) cat("Bad direction in BFGS\n")
+        if(verbose) cat("Bad direction in BFGS\n") 
         # on va zapper la line search et repartir sur l'EM
+        H <- diag(d)
         lambda.i.max <- rep(0, nc) # ceci va produire lambda.max = 0
       } else {
         # preparing for backtracking
         # lambda.i.max <- ifelse(p > 0, (upper - theta)/p, ifelse(p < 0, (lower - theta)/p, Inf))
         C.p <- lin.coeff %*% p
-        lambda.i.max <- ifelse(C.p > 0, (lin.upper - C.theta)/C.p, Inf)
+        # il faudrait tester C.p > 0 mais une petite tolérance aux arrondis est nécessaire
+        lambda.i.max <- ifelse(C.p > 1e-10, (lin.upper - C.theta)/C.p, Inf)
       }
 
       lambda.max <- min(lambda.i.max, na.rm = TRUE) 
@@ -181,12 +199,31 @@ QNEM2 <- function(theta, obs, modele.fun, M.step.fun, max.iter = 100, lin.coeff,
       }
 
       lambda <- min(1, lambda.max)
+
+      if(lambda == 0) {
+        # browser()
+        H <- diag(d)
+        nb.em <- 1 # force one EM step, 
+        next       # now
+      }
       repeat { # bracktracking loop
         theta1 <- theta + lambda * p
+
         if(all(theta1 == theta)) # did we really backtrack this far ? (or lambda was 0!)
           break
-        if(lambda == lambda.max) { # block variables ???
+
+        # ---- Enforce linear constraints.
+        C.theta <- lin.coeff %*% theta1
+        C.p <- lin.coeff %*% p
+
+        for(r in seq_len(nc)) {
+          # back to the border if necessary [possible rounding errors]
+          if( C.theta[r] > lin.upper[r] ) { 
+            theta1 <- theta1 + ( lin.upper[r] - C.theta[r] ) * lin.coeff[r,] / sum( lin.coeff[r,]**2 )
+          }
         }
+        # -----------
+
         mod <- modele_derivatives(modele.fun, theta1, obs)
         fo1 <- forward_ll(mod, TRUE)
         nb.fw <- nb.fw + 1L
@@ -198,6 +235,7 @@ QNEM2 <- function(theta, obs, modele.fun, M.step.fun, max.iter = 100, lin.coeff,
         if(ll1 <= ll + c.armijo * lambda * p.grad)
           break
         lambda <- lambda * tau_backt
+        H <- H * tau_backt
         if(verbose) cat("backtracking\n")
       }
       # out of the backtracking loop with a "good" theta1
@@ -210,7 +248,6 @@ QNEM2 <- function(theta, obs, modele.fun, M.step.fun, max.iter = 100, lin.coeff,
         # nb.em <- 1
       } else {
         H <- H_update(H, s, y)
-        # ------ if new wariables are blocked -----
       }
       # update loop variables
       ll <- ll1
@@ -223,7 +260,9 @@ QNEM2 <- function(theta, obs, modele.fun, M.step.fun, max.iter = 100, lin.coeff,
     if((QN & auto.em & !convex) | (QN & nb.em > 0)) { # in QN, decided to force at least one EM step
       H <- matrix(NA_real_, d, d)
     } else {
-      if(rel.ll < reltol | i == max.iter) break
+      if(i == max.iter) break
+      if(rel.ll < reltol & !QN) break
+      if(rel.ll < reltol & QN) break # nb.em <- 5
     }
     i <- i+1
     if(verbose) cat("theta =", as.vector(theta), "\n")
@@ -232,5 +271,29 @@ QNEM2 <- function(theta, obs, modele.fun, M.step.fun, max.iter = 100, lin.coeff,
   R <- list(theta = theta, neg.ll = ll, iter = i, forwards = nb.fw, backwards = nb.bw)
   if(trace.theta) R$Theta <- Theta[, 1:i ]
   R
+}
+
+
+
+project.vector <- function(v, D) {
+  if(nrow(D) == 0) return(v)
+  # on prend y* = v - alpha1 C1' - ... - alphak Ck' tel que Ci p*= 0 pour tout les i
+  DDp <- tcrossprod(D)
+  DDpi <- MASS::ginv(DDp)
+  alpha <- DDpi %*% (D %*% v)
+  v <- v - t(D) %*% alpha
+  # pour regler certaines erreurs d'arrondi
+  v[ abs(v) < 1e-10 ] <- 0
+  v
+}
+
+
+# Vi - Vi %*% X %*% (t(X) %*% Vi %*% X)^{-1} %*% t(X)) %*% Vi
+# où X engendre l'espace des dimensions bloquées
+project.H <- function(H, D) {
+  if(nrow(D) == 0) return(H)
+  Vi.X <- H %*% t(D)
+  tX.Vi.X <- D %*% Vi.X
+  H - Vi.X %*% MASS::ginv(tX.Vi.X) %*% t(Vi.X)
 }
 
