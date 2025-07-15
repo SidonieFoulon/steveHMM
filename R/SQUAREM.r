@@ -53,7 +53,13 @@ SQUAREM <- function(theta, obs, modele.fun, M.step.fun, lower, upper, max.iter =
 
   # 1st EM iterate need to be computed before entering the loop
   mod <- modele.fun(theta, obs)
-  if(any(is.infinite(mod$p.emiss))) {
+  if(is.list(mod$p.emiss)) {
+    test <- any(sapply( mod$p.emiss, \(x) any(is.infinite(x)) ))
+  } else {
+    test <- any(is.infinite(mod$p.emiss))
+  }
+
+  if(test) {
     stop("Infinite density in model at starting value")
   }
 
@@ -75,7 +81,13 @@ SQUAREM <- function(theta, obs, modele.fun, M.step.fun, lower, upper, max.iter =
 
     repeat { # iterate EM until beta > 0
       mod <- modele.fun(theta, obs)
-      if(any(is.infinite(mod$p.emiss))) {
+      if(is.list(mod$p.emiss)) {
+        test <- any(sapply( mod$p.emiss, \(x) any(is.infinite(x)) ))
+      } else {
+        test <- any(is.infinite(mod$p.emiss))
+      }
+
+      if(test) {
         warning("Infinite density in model")
         EXIT <- TRUE
         break
@@ -128,7 +140,7 @@ SQUAREM <- function(theta, obs, modele.fun, M.step.fun, lower, upper, max.iter =
 
     # computing log likelihood
     # first for the last theta
-    ll0 <- sum(log(colSums(fo$alpha * mod$p.emiss)))
+    ll0 <- fo$likelihood
 
     # capping beta
     if(beta > 2) beta <- 2
@@ -142,7 +154,12 @@ SQUAREM <- function(theta, obs, modele.fun, M.step.fun, lower, upper, max.iter =
         ll01 <- -Inf
       } else {
         mod <- modele.fun(theta1, obs)
-        if(any(is.infinite(mod$p.emiss))) {
+        if(is.list(mod$p.emiss)) {
+          test <- any(sapply( mod$p.emiss, \(x) any(is.infinite(x)) ))
+        } else {
+          test <- any(is.infinite(mod$p.emiss))
+        }
+        if(test) {
           warning("Infinite density in model")
           EXIT <- TRUE
           break
@@ -150,7 +167,7 @@ SQUAREM <- function(theta, obs, modele.fun, M.step.fun, lower, upper, max.iter =
         fo <- forward(mod)
         nb.fw <- nb.fw + 1L
 
-        ll01 <- sum(log(colSums(fo$alpha * mod$p.emiss)))
+        ll01 <- fo$likelihood
         rel.ll0 <- abs(ll0 - ll01) / (abs(ll0) + reltol)
       }
       if(ll01 >= ll0) { # accept proposal

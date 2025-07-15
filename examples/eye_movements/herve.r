@@ -90,6 +90,34 @@ test.em <- function(seeds, data = OBS) {
   D
 }
 
+
+test.squarem <- function(seeds, data = OBS) {
+  n <- length(seeds)
+  D <- as.data.frame(rep(list(numeric(n)), 18))
+  colnames(D) <- c("seed", "time", "iterations", "likelihood", "t12", "t13", "t21", "t23", 
+                   "t31", "t32", "e12", "e13", "e21", "e23", "e31", "e32", "pi1", "pi2")
+  for(i in seq_along(seeds)) {
+    s <- seeds[i]
+    set.seed(s)
+    par <- random.par()
+    time <- system.time( 
+              tr <- try(
+                squarem <- SQUAREM(par, data, modele.eye, M.step.eye, max.iter = 1000, trace.theta = FALSE) 
+              ) 
+            )
+
+    D$seed[i] <- s
+    D$time[i] <- time[3]
+    if(class(tr) != "try-error") {
+      D$iterations[i] <- squarem$iter
+      D$likelihood[i] <- -squarem$likelihood
+      D[i, 5:18] <- squarem$theta
+    }
+    print(D[i,])
+  }
+  D
+}
+
 test.qnem <- function(seeds, data = OBS) {
   n <- length(seeds)
   D <- as.data.frame(rep(list(numeric(n)), 20))
