@@ -31,7 +31,7 @@ QNEM2(
 
 \item{max.iter}{maximum number of iteration of the algorithm (default is 100)}
 
-\item{lin.coeff}{linear coefficients for constraints}
+\item{lin.coeff}{matrix of coefficients for constraints}
 
 \item{lin.upper}{upper constraints}
 
@@ -48,4 +48,7 @@ This function returns the final estimation of the parameters in "theta", the fin
 }
 \description{
 QNEM algorithm.
+}
+\details{
+in this implementation of QNEM, the coefficients are constrained so that `lin.coeff %*% theta <= lin.upper`.
 }

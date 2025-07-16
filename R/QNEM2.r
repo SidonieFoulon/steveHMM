@@ -8,12 +8,14 @@
 #'        - input : obs, backward
 #'        - output : theta
 #' @param max.iter maximum number of iteration of the algorithm (default is 100)
-#' @param lin.coeff linear coefficients for constraints
+#' @param lin.coeff matrix of coefficients for constraints
 #' @param lin.upper upper constraints
 #' @param trace.theta whether you want to keep theta estimation for each iteration (default is TRUE)
 #' @param reltol if criteria = "reltol", constant related to the stopping criterion, often depending on machine precision (default is sqrt(.Machine$double.eps))
 #' @param nb.em the number of Baum-Welch EM algorithm to perform before switching to BFGS algorithm
 #' @param verbose if \code{TRUE}, displays information on the process (default is FALSE)
+#'
+#' @details in this implementation of QNEM, the coefficients are constrained so that `lin.coeff %*% theta <= lin.upper`.
 #'
 #' @return This function returns the final estimation of the parameters in "theta", the final negative likelihood in "neg.ll", the number of iterations in "iter" and the number of forward and backward algorithms steps in resp. "forward" and "backward". If trace.theta = TRUE, it will also return the parameters estimated for each iteration in "Theta".
 #'
